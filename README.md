@@ -5,7 +5,7 @@ Purpose of this is repo is to run test automation for example programs of GitHub
 
 Scripts will be organized by test type such as Smoke, Regression and API.
 
-- 👋 Hi, I’m @SudhakarMidde2214
+- 👋 Hi, I’m @SudhakarMidde
 - 👀 I’m interested in implementing Playwright automation code by using GitHub Copilot
 - 🌱 I’m currently learning Python language to improve my coding ability and strength
 - 💞️ I’m looking to collaborate on more coding knowledge
@@ -14,6 +14,6 @@ Scripts will be organized by test type such as Smoke, Regression and API.
 - ⚡ Fun fact: Keep smile
 
 <!---
-SudhakarMidde2214/SudhakarMidde2214 is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+SudhakarMidde2214/SudhakarMidde is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 You can click the Preview link to take a look at your changes.
 --->

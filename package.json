@@ -3,7 +3,21 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "clean": "rimraf ./test-results",
+    "test": "rimraf ./test-results & playwright test --reporter=html",
+    "test:ui": "playwright test --headed --ui",
+    "test:debug": "playwright test --headed --debug",
+    "test:headless": "playwright test --reporter=html --headed=false",
+    "test:parallel": "playwright test --workers=4",
+    "test:single": "playwright test --workers=1",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "test:api": "playwright test --grep @api",
+    "test:visual": "playwright test --grep @visual",
+    "test:performance": "playwright test --grep @performance",
+    "test:accessibility": "playwright test --grep @accessibility"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,6 +29,7 @@
     "@faker-js/faker": "^9.8.0",
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
+    "rimraf": "^5.0.10",
     "tesseract.js": "^6.0.1"
   }
 }

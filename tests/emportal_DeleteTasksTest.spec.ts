@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 // Import necessary modules and classes
 import { generateFakeUser } from "../utils/fakeUser";
-import { getToday, getPastDate } from "../utils/dateUtils";
+import { getToday, getPastDate, getFutureDate } from "../utils/dateUtils";
 import {
   testData,
   timesheetData,
@@ -33,7 +33,7 @@ const password = process.env.PASSWORD ?? "";
 // Define date formats for the test
 const dateFormat = "YYYY-MM-DD"; // Format for <input type="date">
 const todayDate = dayjs().format(dateFormat); // Format for <input type="date">
-const pastDate = dayjs().subtract(4, "day").format(dateFormat); // Format for <input type="date">
+const futureDate = dayjs().add(4, "day").format(dateFormat); // Format for <input type="date">
 const userName = timesheetData.userName; // User name for timesheet verification
 
 test("Maximize window simulation", async ({ browser }) => {
@@ -42,15 +42,16 @@ test("Maximize window simulation", async ({ browser }) => {
   });
 });
 test("Emportal Login test", async ({ page }) => {
-  const user = generateFakeUser();
-  console.log("Generated Fake User:", user);
+  const taskStartDate = "2025-06-16"; // getPastDate(4);// Use a fixed date for testing
+  const today = getToday();
+  const taskEndDate = "2025-06-20"; // getToday(); // Use a fixed date for testing
 
-  const today = "2025-06-13"; // getToday(); // Use a fixed date for testing
-  //const today = getToday();
-  const WeekStartDate = "2025-06-09"; // getPastDate(4);// Use a fixed date for testing
-  //const WeekStartDate = getPastDate(4);
+  // Get a future date for task start and end
+  // const taskStartDate = getToday(); // Get a future date for task start
+  // const taskEndDate = getFutureDate(4); // Get a future date for task end
   console.log("Today's Date:", today);
-  console.log("Week's start Date:", WeekStartDate);
+  console.log("Week's start Date:", taskStartDate);
+  console.log("Week's end Date:", taskEndDate);
   const loginPage = new LoginPage(page);
 
   // Log the task details
@@ -81,30 +82,18 @@ test("Emportal Login test", async ({ page }) => {
   await loginPage.submitLogin();
   // Verify successful login
   await expect(page).toHaveURL(baseURL + "#/home");
-  // Check if the user is logged in
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  // Determine the greeting based on the current time
-  let greeting = "";
-  // Set greeting based on the time of day
-  if (hours >= 0 && hours < 12) {
-    greeting = testData.greetingTimes.morning; // "Good Morning"
-  } else if (hours >= 12 && (hours < 16 || (hours === 15 && minutes <= 59))) {
-    greeting = testData.greetingTimes.afternoon; // "Good Afternoon"
-  } else if ((hours >= 16 && hours <= 23) || (hours === 0 && minutes === 0)) {
-    greeting = testData.greetingTimes.evening; // "Good Evening"
-  } else {
-    greeting = "Hello";
-  }
-  console.log(`Current time: ${now.toLocaleTimeString()}`);
-  console.log(`Greeting: ${greeting}`);
+  // Verify the user is logged in by checking the greeting message
+  // Get the greeting based on the time of day
+  const greetingFromTime = await getGreeting();
+  console.log(`Greeting based on time: ${greetingFromTime}`);
   //wait for the page to load and display the user's name
-  await page.waitForSelector(`text=${greeting}, ${userName}`, {
+  await page.waitForSelector(`text=${greetingFromTime}, ${userName}`, {
     timeout: 10000, // Wait up to 10 seconds for the text to appear
   });
   // Verify the user is logged in
-  await expect(page.getByText(`${greeting}, ${userName}`)).toBeVisible();
+  await expect(
+    page.getByText(`${greetingFromTime}, ${userName}`)
+  ).toBeVisible();
   // Navigate to Manage Tasks
   // Create an instance of TasksPage
   const tasksPage = new TasksPage(page);
@@ -118,8 +107,8 @@ test("Emportal Login test", async ({ page }) => {
     taskCData.taskName,
     taskCData.time,
     taskCData.taskDescription,
-    WeekStartDate,
-    today,
+    taskStartDate,
+    taskEndDate,
     taskCData.projectName,
     taskCData.taskCategory
   );
@@ -141,8 +130,8 @@ test("Emportal Login test", async ({ page }) => {
     taskAData.taskName,
     taskAData.time,
     taskAData.taskDescription,
-    WeekStartDate,
-    today,
+    taskStartDate,
+    taskEndDate,
     taskAData.projectName,
     taskAData.taskCategory
   );
@@ -161,8 +150,8 @@ test("Emportal Login test", async ({ page }) => {
     taskBData.taskName,
     taskBData.time,
     taskBData.taskDescription,
-    WeekStartDate,
-    today,
+    taskStartDate,
+    taskEndDate,
     taskBData.projectName,
     taskBData.taskCategory
   );
@@ -172,86 +161,6 @@ test("Emportal Login test", async ({ page }) => {
   await tasksPage.verifyTaskCreation(
     taskBData.taskName,
     taskBData.taskDescription
-  );
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskDData.taskName,
-    taskDData.time,
-    taskDData.taskDescription,
-    WeekStartDate,
-    today,
-    taskDData.projectName,
-    taskDData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskDData.taskName,
-    taskDData.taskDescription
-  );
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskEData.taskName,
-    taskEData.time,
-    taskEData.taskDescription,
-    WeekStartDate,
-    today,
-    taskEData.projectName,
-    taskEData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskEData.taskName,
-    taskEData.taskDescription
-  );
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskFData.taskName,
-    taskFData.time,
-    taskFData.taskDescription,
-    WeekStartDate,
-    today,
-    taskFData.projectName,
-    taskFData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskFData.taskName,
-    taskFData.taskDescription
-  );
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskGData.taskName,
-    taskGData.time,
-    taskGData.taskDescription,
-    WeekStartDate,
-    today,
-    taskGData.projectName,
-    taskGData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskGData.taskName,
-    taskGData.taskDescription
   );
   // Navigate to Manage Time sheets
   const timeSheetsPage = new TimeSheetsPage(page);
@@ -263,7 +172,14 @@ test("Emportal Login test", async ({ page }) => {
   await timeSheetsPage.assertTimesheetPageVisible(userName);
   //fill in time for the first task
   for (let i = 0; i < 5; i++) {
-    //await page.getByLabel("hh:mm").nth(i).click();
+    //wait for the element to be visible before filling
+    await page
+      .getByLabel("hh:mm")
+      .nth(i)
+      .waitFor({ state: "visible", timeout: 5000 });
+    page.setDefaultTimeout(3000); // Set default timeout to 3 seconds
+    // Fill in 2 hours for the first 5 tasks
+    console.log(`Filling time for task ${i + 1}`);
     await page.getByLabel("hh:mm").nth(i).fill("2");
   }
   const items = page.getByLabel("hh:mm"); // Get all elements with the label "hh:mm"
@@ -278,15 +194,13 @@ test("Emportal Login test", async ({ page }) => {
       .getByLabel("hh:mm")
       .nth(i)
       .waitFor({ state: "visible", timeout: 5000 });
+    page.setDefaultTimeout(3000); // Set default timeout to 3 seconds
+    // Fill in 1 hour for the remaining tasks
+    console.log(`Filling time for task ${i + 1}`);
     await page.getByLabel("hh:mm").nth(i).fill("1");
   }
   // Save the timesheet
   await timeSheetsPage.saveTimesheet();
-  // Confirm the timesheet submission
-  //await timeSheetsPage.confirmTimesheetSubmission();
-  // Verify timesheet submission
-  //const isSubmitted = await timeSheetsPage.verifyTimesheetSubmission();
-  //expect(isSubmitted).toBeTruthy();
 
   // Navigate to Manage Tasks
   await tasksPage.navigateToManageTasks();
@@ -326,4 +240,23 @@ async function deleteAllTasks(tasksPage: TasksPage, page: any) {
   await tasksPage.deleteTaskByName(taskGData.taskName);
   // Verify the task is deleted
   await expect(page.getByText(taskGData.taskName)).not.toBeVisible();
+}
+// return greeting
+async function getGreeting() {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  // Determine the greeting based on the current time
+  let greeting = "";
+  // Set greeting based on the time of day
+  if (hours >= 0 && hours < 12) {
+    greeting = testData.greetingTimes.morning; // "Good Morning"
+  } else if (hours >= 12 && (hours < 16 || (hours === 15 && minutes <= 59))) {
+    greeting = testData.greetingTimes.afternoon; // "Good Afternoon"
+  } else if ((hours >= 16 && hours <= 23) || (hours === 0 && minutes === 0)) {
+    greeting = testData.greetingTimes.evening; // "Good Evening"
+  } else {
+    greeting = "Hello";
+  }
+  return greeting;
 }

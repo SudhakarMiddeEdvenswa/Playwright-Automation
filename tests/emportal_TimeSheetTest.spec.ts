@@ -332,5 +332,3 @@ async function getGreeting() {
   }
   return greeting;
 }
-// This function returns the greeting based on the current time of day
-// export async function getGreeting() {

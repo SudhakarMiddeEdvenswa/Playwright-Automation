@@ -159,6 +159,11 @@ test("Emportal Login test", async ({ page }) => {
   }
   // Save the timesheet
   await timeSheetsPage.saveTimesheet();
+  // Confirm the timesheet submission
+  await timeSheetsPage.confirmTimesheetSubmission();
+  // Verify timesheet submission
+  const isSubmitted = await timeSheetsPage.verifyTimesheetSubmission();
+  expect(isSubmitted).toBeTruthy();
   // Close the page (browser will be closed automatically by Playwright test runner)
   await page.close();
 });

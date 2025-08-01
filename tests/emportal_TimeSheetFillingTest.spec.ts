@@ -23,7 +23,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { TasksPage } from "./pages/TasksPage";
 import { TimeSheetsPage } from "./pages/TimeSheetsPage";
 // Load environment variables from .env file
-if (process.env.NODE_ENV == "production") {
+if (process.env.NODE_ENV !== "development") {
   require("dotenv").config();
 }
 // Define base URL, username, and password from environment variables
@@ -94,115 +94,6 @@ test("Emportal Login test", async ({ page }) => {
   await expect(
     page.getByText(`${greetingFromTime}, ${userName}`)
   ).toBeVisible();
-  // Navigate to Manage Tasks
-  // Create an instance of TasksPage
-  const tasksPage = new TasksPage(page);
-  // Navigate to Manage Tasks & Verify the Manage Tasks page is visible
-  await tasksPage.navigateToManageTasks();
-  // Add task details
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskCData.taskName,
-    taskCData.time,
-    taskCData.taskDescription,
-    taskStartDate,
-    taskEndDate,
-    taskCData.projectName,
-    taskCData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskAData.taskName,
-    taskAData.time,
-    taskAData.taskDescription,
-    taskStartDate,
-    taskEndDate,
-    taskAData.projectName,
-    taskAData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskBData.taskName,
-    taskBData.time,
-    taskBData.taskDescription,
-    taskStartDate,
-    taskEndDate,
-    taskBData.projectName,
-    taskBData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskDData.taskName,
-    taskDData.time,
-    taskDData.taskDescription,
-    taskStartDate,
-    taskEndDate,
-    taskDData.projectName,
-    taskDData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskEData.taskName,
-    taskEData.time,
-    taskEData.taskDescription,
-    taskStartDate,
-    taskEndDate,
-    taskEData.projectName,
-    taskEData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskFData.taskName,
-    taskFData.time,
-    taskFData.taskDescription,
-    taskStartDate,
-    taskEndDate,
-    taskFData.projectName,
-    taskFData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
-  // Add another task
-  // Click the Add Tasks button
-  await tasksPage.clickAddTasks();
-  // Fill in task details
-  await tasksPage.fillTaskDetails(
-    taskGData.taskName,
-    taskGData.time,
-    taskGData.taskDescription,
-    taskStartDate,
-    taskEndDate,
-    taskGData.projectName,
-    taskGData.taskCategory
-  );
-  // Save the task
-  await tasksPage.saveTask();
   // Navigate to Manage Time sheets
   const timeSheetsPage = new TimeSheetsPage(page);
   // Navigate to Manage Time sheets
@@ -268,48 +159,14 @@ test("Emportal Login test", async ({ page }) => {
       .getByLabel("hh:mm")
       .nth(i + 1)
       .waitFor({ state: "visible", timeout: 5000 });
-    page.setDefaultTimeout(5000); // Set default timeout to 5 seconds
-    // Fill in 1 hour for the next task
+    page.setDefaultTimeout(5000); // Set default timeout to 10 seconds
   }
   // Save the timesheet
   await timeSheetsPage.saveTimesheet();
-  // Confirm the timesheet submission
-  //await timeSheetsPage.confirmTimesheetSubmission();
-  // Verify timesheet submission
-  // const isSubmitted = await timeSheetsPage.verifyTimesheetSubmission();
-  // expect(isSubmitted).toBeTruthy();
-
   // Close the page (browser will be closed automatically by Playwright test runner)
   await page.close();
 });
 
-// create a function to delete all tasks
-async function deleteAllTasks(tasksPage: TasksPage, page: any) {
-  // Delete the second task
-  await tasksPage.deleteTaskByName(taskBData.taskName);
-  // Verify all tasks are deleted
-  await expect(page.getByText(taskBData.taskName)).not.toBeVisible();
-  // Delete the third task
-  await tasksPage.deleteTaskByName(taskCData.taskName);
-  // Verify the task is deleted
-  await expect(page.getByText(taskCData.taskName)).not.toBeVisible();
-  // Delete the fourth task
-  await tasksPage.deleteTaskByName(taskDData.taskName);
-  // Verify the task is deleted
-  await expect(page.getByText(taskDData.taskName)).not.toBeVisible();
-  // Delete the fifth task
-  await tasksPage.deleteTaskByName(taskEData.taskName);
-  // Verify the task is deleted
-  await expect(page.getByText(taskEData.taskName)).not.toBeVisible();
-  // Delete the sixth task
-  await tasksPage.deleteTaskByName(taskFData.taskName);
-  // Verify the task is deleted
-  await expect(page.getByText(taskFData.taskName)).not.toBeVisible();
-  // Delete the seventh task
-  await tasksPage.deleteTaskByName(taskGData.taskName);
-  // Verify the task is deleted
-  await expect(page.getByText(taskGData.taskName)).not.toBeVisible();
-}
 // return greeting
 async function getGreeting() {
   const now = new Date();

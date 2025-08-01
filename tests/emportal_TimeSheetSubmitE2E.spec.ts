@@ -264,10 +264,6 @@ test("Emportal Login test", async ({ page }) => {
       await expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("01:00");
     }
     console.log(`Task ${i + 1} time filled correctly`);
-    await page
-      .getByLabel("hh:mm")
-      .nth(i + 1)
-      .waitFor({ state: "visible", timeout: 5000 });
     page.setDefaultTimeout(5000); // Set default timeout to 5 seconds
     // Fill in 1 hour for the next task
   }

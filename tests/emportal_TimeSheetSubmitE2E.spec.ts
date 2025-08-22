@@ -226,7 +226,8 @@ test("Emportal Login test", async ({ page }) => {
     await page.getByLabel("hh:mm").nth(i).press("Tab");
     //assert that the time is filled correctly
     if (!expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("02:00")) {
-      await page.getByLabel("hh:mm").nth(i).fill("2", { timeout: 5000 });
+      await page.getByLabel("hh:mm").nth(i).fill("2", { timeout: 60000 });
+      await page.getByLabel("hh:mm").nth(i).focus();
       await page.getByLabel("hh:mm").nth(i).press("Tab");
       await expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("02:00");
     }
@@ -255,11 +256,13 @@ test("Emportal Login test", async ({ page }) => {
     // Fill in 1 hour for the remaining tasks
     console.log(`Filling time for task ${i + 1}`);
     // Fill in 1 hour for the remaining tasks
-    await page.getByLabel("hh:mm").nth(i).fill("1", { timeout: 30000 });
+    await page.getByLabel("hh:mm").nth(i).fill("1", { timeout: 60000 });
+    await page.getByLabel("hh:mm").nth(i).focus();
     await page.getByLabel("hh:mm").nth(i).press("Tab");
     //assert that the time is filled correctly
     if (!expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("01:00")) {
-      await page.getByLabel("hh:mm").nth(i).fill("1", { timeout: 5000 });
+      await page.getByLabel("hh:mm").nth(i).fill("1", { timeout: 60000 });
+      await page.getByLabel("hh:mm").nth(i).focus();
       await page.getByLabel("hh:mm").nth(i).press("Tab");
       await expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("01:00");
     }
@@ -270,7 +273,7 @@ test("Emportal Login test", async ({ page }) => {
   // Save the timesheet
   await timeSheetsPage.saveTimesheet();
   // Confirm the timesheet submission
-  //await timeSheetsPage.confirmTimesheetSubmission();
+  await timeSheetsPage.confirmTimesheetSubmission();
   // Verify timesheet submission
   // const isSubmitted = await timeSheetsPage.verifyTimesheetSubmission();
   // expect(isSubmitted).toBeTruthy();

@@ -3,7 +3,7 @@ import { time } from "console";
 export const testData = {
   user: {
     username: "sudhakar.midde@edvenswatech.com",
-    password: "Mar09@2024",
+    password: process.env.USER_PASSWORD || "",
   },
   greetingTimes: {
     morning: "Good Morning",

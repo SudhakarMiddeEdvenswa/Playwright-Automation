@@ -23,9 +23,6 @@ import { LoginPage } from "./pages/LoginPage";
 import { TasksPage } from "./pages/TasksPage";
 import { TimeSheetsPage } from "./pages/TimeSheetsPage";
 // Load environment variables from .env file
-if (process.env.NODE_ENV == "production") {
-  require("dotenv").config();
-}
 // Define base URL, username, and password from environment variables
 const baseURL = process.env.BASE_URL ?? "";
 const username = process.env.USER ?? "";

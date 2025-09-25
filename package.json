@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "clean": "rm -rf test-results",
-    "test": "playwright test --reporter=html",
+    "clean": "rimraf ./test-results",
+    "test": "rimraf ./test-results & playwright test --reporter=html",
     "test:ui": "playwright test --headed --ui",
     "test:debug": "playwright test --headed --debug",
     "test:headless": "playwright test --reporter=html --headed=false",
@@ -29,6 +29,7 @@
     "@faker-js/faker": "^9.8.0",
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
+    "rimraf": "^5.0.10",
     "tesseract.js": "^6.0.1"
   }
 }

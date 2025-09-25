@@ -238,51 +238,6 @@ test("Emportal Login test", async ({ page }) => {
     taskGData.taskName,
     taskGData.taskDescription
   );
-  // Navigate to Manage Time sheets
-  const timeSheetsPage = new TimeSheetsPage(page);
-  // Navigate to Manage Time sheets
-  await timeSheetsPage.navigateToManageTimeSheets();
-  // Assert that the tasks page is visible
-  await timeSheetsPage.assertTasksPageVisible();
-  // Assert that the timesheet page is visible by checking the user name
-  await timeSheetsPage.assertTimesheetPageVisible(userName);
-  //fill in time for the first task
-  for (let i = 0; i < 5; i++) {
-    //wait for the element to be visible before filling
-    await page
-      .getByLabel("hh:mm")
-      .nth(i)
-      .waitFor({ state: "visible", timeout: 5000 });
-    page.setDefaultTimeout(3000); // Set default timeout to 3 seconds
-    // Fill in 2 hours for the first 5 tasks
-    console.log(`Filling time for task ${i + 1}`);
-    await page.getByLabel("hh:mm").nth(i).fill("2");
-  }
-  const items = page.getByLabel("hh:mm"); // Get all elements with the label "hh:mm"
-  // Get the count of matching elements
-  const count = await items.count();
-  console.log(`Total items found: ${count}`);
-  // Fill in time for the second task onwards from the 5th element
-  for (let i = 5; i < count; i++) {
-    // Fill in 1 hour for each of the remaining tasks
-    //wait for the element to be visible before filling
-    await page
-      .getByLabel("hh:mm")
-      .nth(i)
-      .waitFor({ state: "visible", timeout: 5000 });
-    page.setDefaultTimeout(3000); // Set default timeout to 3 seconds
-    // Fill in 1 hour for the remaining tasks
-    console.log(`Filling time for task ${i + 1}`);
-    await page.getByLabel("hh:mm").nth(i).fill("1");
-  }
-  // Save the timesheet
-  await timeSheetsPage.saveTimesheet();
-  // Confirm the timesheet submission
-  //await timeSheetsPage.confirmTimesheetSubmission();
-  // Verify timesheet submission
-  //const isSubmitted = await timeSheetsPage.verifyTimesheetSubmission();
-  //expect(isSubmitted).toBeTruthy();
-
   // Close the page (browser will be closed automatically by Playwright test runner)
   await page.close();
 });

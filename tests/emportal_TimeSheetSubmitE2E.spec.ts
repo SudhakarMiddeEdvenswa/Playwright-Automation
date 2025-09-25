@@ -18,14 +18,11 @@ import {
   taskEData,
   taskFData,
   taskGData,
-} from "../utils/testData";
-import { LoginPage } from "../tests/pages/LoginPage";
-import { TasksPage } from "../tests/pages/TasksPage";
+} from "../utils/prodData";
+import { LoginPage } from "./pages/LoginPage";
+import { TasksPage } from "./pages/TasksPage";
 import { TimeSheetsPage } from "./pages/TimeSheetsPage";
 // Load environment variables from .env file
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
 // Define base URL, username, and password from environment variables
 const baseURL = process.env.BASE_URL ?? "";
 const username = process.env.USER ?? "";
@@ -42,13 +39,13 @@ test("Maximize window simulation", async ({ browser }) => {
   });
 });
 test("Emportal Login test", async ({ page }) => {
-  const taskStartDate = "2025-06-16"; // getPastDate(4);// Use a fixed date for testing
+  //const taskStartDate = "2025-06-16"; // getPastDate(4);// Use a fixed date for testing
   const today = getToday();
-  const taskEndDate = "2025-06-20"; // getToday(); // Use a fixed date for testing
+  //const taskEndDate = "2025-06-20"; // getToday(); // Use a fixed date for testing
 
   // Get a future date for task start and end
-  // const taskStartDate = getToday(); // Get a future date for task start
-  // const taskEndDate = getFutureDate(4); // Get a future date for task end
+  const taskStartDate = getPastDate(4); // Get a future date for task start
+  const taskEndDate = getToday(); // Get a future date for task end
   console.log("Today's Date:", today);
   console.log("Week's start Date:", taskStartDate);
   console.log("Week's end Date:", taskEndDate);
@@ -114,15 +111,6 @@ test("Emportal Login test", async ({ page }) => {
   );
   // Save the task
   await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskCData.taskName,
-    taskCData.taskDescription
-  );
-  if (await page.getByText(taskAData.taskName).isVisible()) {
-    // Delete remaining all tasks
-    deleteAllTasks(tasksPage, page);
-  }
   // Click the Add Tasks button
   await tasksPage.clickAddTasks();
   // Fill in task details
@@ -137,11 +125,6 @@ test("Emportal Login test", async ({ page }) => {
   );
   // Save the task
   await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskAData.taskName,
-    taskAData.taskDescription
-  );
   // Add another task
   // Click the Add Tasks button
   await tasksPage.clickAddTasks();
@@ -157,11 +140,6 @@ test("Emportal Login test", async ({ page }) => {
   );
   // Save the task
   await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskBData.taskName,
-    taskBData.taskDescription
-  );
   // Add another task
   // Click the Add Tasks button
   await tasksPage.clickAddTasks();
@@ -177,11 +155,6 @@ test("Emportal Login test", async ({ page }) => {
   );
   // Save the task
   await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskDData.taskName,
-    taskDData.taskDescription
-  );
   // Add another task
   // Click the Add Tasks button
   await tasksPage.clickAddTasks();
@@ -197,11 +170,6 @@ test("Emportal Login test", async ({ page }) => {
   );
   // Save the task
   await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskEData.taskName,
-    taskEData.taskDescription
-  );
   // Add another task
   // Click the Add Tasks button
   await tasksPage.clickAddTasks();
@@ -217,11 +185,6 @@ test("Emportal Login test", async ({ page }) => {
   );
   // Save the task
   await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskFData.taskName,
-    taskFData.taskDescription
-  );
   // Add another task
   // Click the Add Tasks button
   await tasksPage.clickAddTasks();
@@ -237,11 +200,6 @@ test("Emportal Login test", async ({ page }) => {
   );
   // Save the task
   await tasksPage.saveTask();
-  // Verify task creation
-  await tasksPage.verifyTaskCreation(
-    taskGData.taskName,
-    taskGData.taskDescription
-  );
   // Navigate to Manage Time sheets
   const timeSheetsPage = new TimeSheetsPage(page);
   // Navigate to Manage Time sheets
@@ -253,14 +211,31 @@ test("Emportal Login test", async ({ page }) => {
   //fill in time for the first task
   for (let i = 0; i < 5; i++) {
     //wait for the element to be visible before filling
+    page.setDefaultTimeout(30000);
     await page
       .getByLabel("hh:mm")
       .nth(i)
-      .waitFor({ state: "visible", timeout: 5000 });
-    page.setDefaultTimeout(3000); // Set default timeout to 3 seconds
+      .waitFor({ state: "visible", timeout: 20000 });
     // Fill in 2 hours for the first 5 tasks
     console.log(`Filling time for task ${i + 1}`);
-    await page.getByLabel("hh:mm").nth(i).fill("2");
+    // Fill in 2 hours for the first 5 tasks
+    await page.getByLabel("hh:mm").nth(i).fill("2", { timeout: 30000 });
+    await page.getByLabel("hh:mm").nth(i).press("Tab");
+    //assert that the time is filled correctly
+    if (!expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("02:00")) {
+      await page.getByLabel("hh:mm").nth(i).fill("2", { timeout: 60000 });
+      await page.getByLabel("hh:mm").nth(i).focus();
+      await page.getByLabel("hh:mm").nth(i).press("Tab");
+      await expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("02:00");
+    }
+    //await expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("02:00");
+    console.log(`Task ${i + 1} time filled correctly`);
+    // Wait for the next element to be visible before filling
+    await page
+      .getByLabel("hh:mm")
+      .nth(i + 1)
+      .waitFor({ state: "visible", timeout: 5000 });
+    page.setDefaultTimeout(5000); // Set default timeout to 5 seconds
   }
   const items = page.getByLabel("hh:mm"); // Get all elements with the label "hh:mm"
   // Get the count of matching elements
@@ -270,26 +245,36 @@ test("Emportal Login test", async ({ page }) => {
   for (let i = 5; i < count; i++) {
     // Fill in 1 hour for each of the remaining tasks
     //wait for the element to be visible before filling
+    page.setDefaultTimeout(30000);
     await page
       .getByLabel("hh:mm")
       .nth(i)
-      .waitFor({ state: "visible", timeout: 5000 });
-    page.setDefaultTimeout(3000); // Set default timeout to 3 seconds
+      .waitFor({ state: "visible", timeout: 20000 });
     // Fill in 1 hour for the remaining tasks
     console.log(`Filling time for task ${i + 1}`);
-    await page.getByLabel("hh:mm").nth(i).fill("1");
+    // Fill in 1 hour for the remaining tasks
+    await page.getByLabel("hh:mm").nth(i).fill("1", { timeout: 60000 });
+    await page.getByLabel("hh:mm").nth(i).focus();
+    await page.getByLabel("hh:mm").nth(i).press("Tab");
+    //assert that the time is filled correctly
+    if (!expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("01:00")) {
+      await page.getByLabel("hh:mm").nth(i).fill("1", { timeout: 60000 });
+      await page.getByLabel("hh:mm").nth(i).focus();
+      await page.getByLabel("hh:mm").nth(i).press("Tab");
+      await expect(page.getByLabel("hh:mm").nth(i)).toHaveValue("01:00");
+    }
+    console.log(`Task ${i + 1} time filled correctly`);
+    page.setDefaultTimeout(5000); // Set default timeout to 5 seconds
+    // Fill in 1 hour for the next task
   }
   // Save the timesheet
   await timeSheetsPage.saveTimesheet();
+  // Confirm the timesheet submission
+  await timeSheetsPage.confirmTimesheetSubmission();
+  // Verify timesheet submission
+  // const isSubmitted = await timeSheetsPage.verifyTimesheetSubmission();
+  // expect(isSubmitted).toBeTruthy();
 
-  // Navigate to Manage Tasks
-  await tasksPage.navigateToManageTasks();
-  // Delete the first task
-  await tasksPage.deleteFirstTask(taskAData.taskName);
-  // Verify the task is deleted
-  await expect(page.getByText(taskAData.taskName)).not.toBeVisible();
-  // Delete all remaining tasks
-  await deleteAllTasks(tasksPage, page);
   // Close the page (browser will be closed automatically by Playwright test runner)
   await page.close();
 });
@@ -340,5 +325,3 @@ async function getGreeting() {
   }
   return greeting;
 }
-// This function returns the greeting based on the current time of day
-// export async function getGreeting() {

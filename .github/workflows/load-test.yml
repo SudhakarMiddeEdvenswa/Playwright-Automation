@@ -1,0 +1,41 @@
+name: K6 Load Testing
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  k6_load_test:
+    name: Run K6 Load Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates gnupg
+          sudo gpg -k
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Run k6 Load Test
+        run: |
+          mkdir -p results
+          k6 run tests/load_test.js --out json=results/k6_results.json
+
+      - name: Upload k6 Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-load-test-results
+          path: results/
+          retention-days: 15
+
+

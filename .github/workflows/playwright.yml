@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    environment: Prod Env   # 👈 REQUIRED (use your actual environment name)
+    environment: STAGE   # 👈 REQUIRED (use your actual environment name)
     timeout-minutes: 60
     runs-on: ubuntu-latest
 

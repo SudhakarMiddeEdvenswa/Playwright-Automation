@@ -8,14 +8,15 @@ on:
 
 jobs:
   test:
+    environment: STAGE   # 👈 REQUIRED (use your actual environment name)
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
     env:
-      BASE_URL: ${{ secrets.BASE_URL }}
       NODE_ENV: ${{ secrets.NODE_ENV }}
-      PASSWORD: ${{ secrets.PASSWORD }}
+      BASE_URL: ${{ secrets.BASE_URL }}
       USER: ${{ secrets.USER }}
+      PASSWORD: ${{ secrets.PASSWORD }}
 
     steps:
       - name: Checkout Code
@@ -38,7 +39,6 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright Tests
-        # If you intended to run a specific file, use: npx playwright test tests/filename
         run: npx playwright test tests/emportal_TimeSheetSubmitE2E.spec.ts --reporter=html --output=playwright-report
 
       - name: Upload Playwright Report on Failure

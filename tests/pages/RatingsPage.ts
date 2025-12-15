@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
-// This file defines the TasksPage class for interacting with the tasks page of the application.
-export class TasksPage {
+// This file defines the RatingsPage class for interacting with the ratings page of the application.
+export class RatingsPage {
   private page: Page;
 
   constructor(page: Page) {
@@ -43,6 +43,9 @@ export class TasksPage {
     //   .click();
     await this.page
       .getByRole("textbox", { name: "Enter your comments..." })
+      .clear();
+    await this.page
+      .getByRole("textbox", { name: "Enter your comments..." })
       .fill(eeDescription);
     await this.page
       .getByRole("button", { name: "Quality of Output 0.5" })
@@ -57,6 +60,9 @@ export class TasksPage {
         }`,
       })
       .click();
+    await this.page
+      .getByRole("textbox", { name: "Enter your comments..." })
+      .clear();
     await this.page
       .getByRole("textbox", { name: "Enter your comments..." })
       .fill(qoDescription);
@@ -79,8 +85,11 @@ export class TasksPage {
       .click();
     await this.page
       .getByRole("textbox", { name: "Enter your comments..." })
+      .clear();
+    await this.page
+      .getByRole("textbox", { name: "Enter your comments..." })
       .fill(accountAndOwnerDescription);
-    await this.page.getByRole("button", { name: "Next" }).click();
+    //await this.page.getByRole("button", { name: "Next" }).click();
   }
   // Fill in Creativity task details
   async fillCreativityTaskDetails(
@@ -130,7 +139,7 @@ export class TasksPage {
     await this.page
       .getByRole("textbox", { name: "Enter your comments..." })
       .fill(complexityAndEffortDescription);
-    await this.page.getByRole("button", { name: "Next" }).click();
+    //await this.page.getByRole("button", { name: "Next" }).click();
   }
   // Fill in Collaboration task details
   async fillCollaborationTaskDetails(
@@ -186,7 +195,7 @@ export class TasksPage {
     await this.page
       .getByRole("textbox", { name: "Enter your comments..." })
       .fill(relationshipBuildingDescription);
-    await this.page.getByRole("button", { name: "Next" }).click();
+    //await this.page.getByRole("button", { name: "Next" }).click();
   }
   // Fill in Compliance task details
   async fillComplianceTaskDetails(
@@ -241,7 +250,7 @@ export class TasksPage {
     await this.page
       .getByRole("textbox", { name: "Enter your comments..." })
       .fill(accuracyAndIntegrityOfRecordsDescription);
-    await this.page.getByRole("button", { name: "Next" }).click();
+    //await this.page.getByRole("button", { name: "Next" }).click();
   }
   // Fill in Customer task details
   async fillCustomerTaskDetails(
@@ -400,6 +409,11 @@ export class TasksPage {
     if (!isVisible) {
       throw new Error(`Rated value ${ratedValue} is not visible on the page`);
     }
+  }
+  //Click Next button
+  async clickNextButton() {
+    await this.page.getByRole("button", { name: "Next" }).isVisible();
+    await this.page.getByRole("button", { name: "Next" }).click();
   }
   // Submit the task
   async submitTask() {

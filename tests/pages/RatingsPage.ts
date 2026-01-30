@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { Page, expect } from "@playwright/test";
 // This file defines the RatingsPage class for interacting with the ratings page of the application.
 export class RatingsPage {
   private page: Page;
@@ -13,14 +13,12 @@ export class RatingsPage {
   }
   // Click the Associate Name link
   async clickAssociateName(associateId: string) {
-    await this.page
+    const userOverviewLink = this.page
       .getByRole("row", { name: `${associateId} User Overview Click on` })
-      .getByLabel("User Overview")
-      .isVisible();
-    await this.page
-      .getByRole("row", { name: `${associateId} User Overview Click on` })
-      .getByLabel("User Overview")
-      .click();
+      .getByLabel("User Overview"); // or .nth(1) if you specifically need the second element
+
+    await expect(userOverviewLink).toBeVisible();
+    await userOverviewLink.click();
   }
   // Fill in Capability task details
   async fillCapabilityTaskDetails(
@@ -29,18 +27,18 @@ export class RatingsPage {
     qoDescription: string,
     qoStars: string,
     accountAndOwnerDescription: string,
-    accountAndOwnerStars: string
+    accountAndOwnerStars: string,
   ) {
     await this.page
       .getByRole("button", { name: "Execution Efficiency 0.5" })
       .click();
-    // await this.page
-    //   .getByRole("button", {
-    //     name: `Execution Efficiency 0.5 Stars ${eeStars} Star ${
-    //       eeStars === "1" ? "" : "s"
-    //     }`,
-    //   })
-    //   .click();
+    await this.page
+      .getByRole("button", {
+        name: `Execution Efficiency 0.5 Stars ${eeStars} Star ${
+          eeStars === "1" ? "" : "s"
+        }`,
+      })
+      .click();
     await this.page
       .getByRole("textbox", { name: "Enter your comments..." })
       .clear();
@@ -98,7 +96,7 @@ export class RatingsPage {
     alignmentDescription: string,
     alignmentStars: string,
     complexityAndEffortDescription: string,
-    complexityAndEffortStars: string
+    complexityAndEffortStars: string,
   ) {
     // await this.page
     //   .getByRole("button", { name: "Originality 0.5 Stars 1 Star" })
@@ -148,7 +146,7 @@ export class RatingsPage {
     adaptabilityAndFlexibilityDescription: string,
     adaptabilityAndFlexibilityStars: string,
     relationshipBuildingDescription: string,
-    relationshipBuildingStars: string
+    relationshipBuildingStars: string,
   ) {
     // await this.page
     //   .getByRole("button", { name: "Team Contribution 0.5 Stars 1" })
@@ -204,7 +202,7 @@ export class RatingsPage {
     adherenceDescription: string,
     adherenceStars: string,
     accuracyAndIntegrityOfRecordsDescription: string,
-    accuracyAndIntegrityOfRecordsStars: string
+    accuracyAndIntegrityOfRecordsStars: string,
   ) {
     // await this.page
     //   .getByRole("button", { name: "Awareness 0.5 Stars 1 Star 1." })
@@ -261,7 +259,7 @@ export class RatingsPage {
     costOptimizationDescription: string,
     costOptimizationStars: string,
     brandPromotionDescription: string,
-    brandPromotionStars: string
+    brandPromotionStars: string,
   ) {
     // await this.page
     //   .getByRole("button", { name: "Convenience 0.5 Stars 1 Star" })

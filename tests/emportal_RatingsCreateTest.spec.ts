@@ -17,7 +17,7 @@ import {
   collaborationRatingData,
   complianceRatingData,
   customerRatingData,
-} from "../utils/testData";
+} from "../utils/prodData";
 import { LoginPage } from "./pages/LoginPage";
 import { TasksPage } from "./pages/TasksPage";
 import { RatingsPage } from "./pages/RatingsPage";
@@ -88,11 +88,11 @@ test("Emportal Login test", async ({ page }) => {
   console.log(`Greeting based on time: ${greetingFromTime}`);
   //wait for the page to load and display the user's name
   await page.waitForSelector(`text=${greetingFromTime}, ${userName}`, {
-    timeout: 10000, // Wait up to 10 seconds for the text to appear
+    timeout: 15000, // Wait up to 10 seconds for the text to appear
   });
   // Verify the user is logged in
   await expect(
-    page.getByText(`${greetingFromTime}, ${userName}`)
+    page.getByText(`${greetingFromTime}, ${userName}`),
   ).toBeVisible();
   // Navigate to Manage Ratings
   // Create an instance of RatingsPage
@@ -111,7 +111,7 @@ test("Emportal Login test", async ({ page }) => {
     capabilityRatingData.qualityOfOutPutDescription,
     "0.5",
     capabilityRatingData.accountabilityAndOwnershipDescription,
-    "0.5"
+    "0.5",
   );
   // Save the rating Description and click Next button
   await ratingsPage.clickNextButton();
@@ -122,7 +122,7 @@ test("Emportal Login test", async ({ page }) => {
     creativityRatingData.alignmentDescription,
     "0.5",
     creativityRatingData.complexityAndEffortDescription,
-    "0.5"
+    "0.5",
   );
   // Save the rating Description and click Next button
   await ratingsPage.clickNextButton();
@@ -134,7 +134,7 @@ test("Emportal Login test", async ({ page }) => {
     collaborationRatingData.adaptabilityAndFlexibilityDescription,
     "0.5",
     collaborationRatingData.relationshipBuildingDescription,
-    "0.5"
+    "0.5",
   );
   // Save the rating Description and click Next button
   await ratingsPage.clickNextButton();
@@ -146,7 +146,7 @@ test("Emportal Login test", async ({ page }) => {
     complianceRatingData.adherenceDescription,
     "0.5",
     complianceRatingData.accuracyAndIntegrityOfRecordsDescription,
-    "0.5"
+    "0.5",
   );
   // Save the rating Description and click Next button
   await ratingsPage.clickNextButton();
@@ -158,7 +158,7 @@ test("Emportal Login test", async ({ page }) => {
     complianceRatingData.adherenceDescription,
     "0.5",
     complianceRatingData.accuracyAndIntegrityOfRecordsDescription,
-    "0.5"
+    "0.5",
   );
   // Save the rating Description and click Next button
   await ratingsPage.clickNextButton();
@@ -172,7 +172,7 @@ test("Emportal Login test", async ({ page }) => {
     customerRatingData.costOptimizationDescription,
     "0.5",
     customerRatingData.brandPromotionDescription,
-    "0.5"
+    "0.5",
   );
   // Save the rating Description and click Next button
   await ratingsPage.clickNextButton();

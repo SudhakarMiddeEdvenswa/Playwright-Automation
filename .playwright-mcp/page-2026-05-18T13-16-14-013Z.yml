@@ -1,0 +1,114 @@
+- generic [ref=e58]:
+  - banner [ref=e59]:
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - button "open drawer" [ref=e1718] [cursor=pointer]:
+          - img [ref=e64]
+        - img [ref=e1719]
+      - img "Auth Logo" [ref=e1720] [cursor=pointer]
+      - generic [ref=e70]:
+        - paragraph [ref=e71]: UK Score 701
+        - paragraph [ref=e80]: Midde Sudhakar
+        - button [ref=e81] [cursor=pointer]:
+          - img [ref=e82]
+        - button "Open Settings" [ref=e1721] [cursor=pointer]:
+          - img "sudhakar.midde@edvenswatech.com" [ref=e1722]
+  - generic [ref=e89]:
+    - button [ref=e91] [cursor=pointer]:
+      - img [ref=e92]
+    - separator [ref=e94]
+    - list [ref=e95]:
+      - listitem [ref=e96]:
+        - button "Home" [ref=e1723] [cursor=pointer]:
+          - img [ref=e99]
+          - generic:
+            - generic: Home
+      - listitem [ref=e101]:
+        - button "Manage Tasks Manage Tasks" [ref=e1724] [cursor=pointer]:
+          - generic "Manage Tasks" [ref=e1725]:
+            - img [ref=e105]
+          - generic:
+            - generic: Manage Tasks
+      - listitem [ref=e107]:
+        - button "Manage Timesheets Manage Timesheets" [ref=e1726] [cursor=pointer]:
+          - generic "Manage Timesheets" [ref=e1727]:
+            - img [ref=e111]
+          - generic:
+            - generic: Manage Timesheets
+      - listitem [ref=e113]:
+        - button "Ratings" [ref=e1728] [cursor=pointer]:
+          - img [ref=e116]
+          - generic:
+            - generic: Ratings
+      - listitem [ref=e118]:
+        - button "ENS" [ref=e1729] [cursor=pointer]:
+          - img [ref=e121]
+          - generic:
+            - generic: ENS
+      - listitem [ref=e123]:
+        - button "Release Notes" [ref=e1730] [cursor=pointer]:
+          - img [ref=e126]
+          - generic:
+            - generic: Release Notes
+      - listitem [ref=e128]:
+        - button "Feedback" [ref=e1731] [cursor=pointer]:
+          - img [ref=e131]
+          - generic:
+            - generic: Feedback
+  - main [ref=e133]:
+    - generic [ref=e134]:
+      - navigation "breadcrumb" [ref=e1732]:
+        - list [ref=e136]:
+          - listitem [ref=e137]:
+            - button "Home" [ref=e1733] [cursor=pointer]:
+              - img [ref=e233]
+              - paragraph [ref=e236]: Home
+          - listitem [ref=e237]: ›
+          - listitem [ref=e238]:
+            - button "Appraisals" [disabled]:
+              - generic:
+                - paragraph: Appraisals
+      - generic [ref=e138]:
+        - paragraph [ref=e139]:
+          - text: Powered By
+          - link "Visit BUNAI" [ref=e1735] [cursor=pointer]:
+            - /url: https://bunai.edvenswa.ai/
+            - text: Edvenswa.AI
+        - generic [ref=e141]:
+          - generic "Like" [ref=e1736]:
+            - button [ref=e240] [cursor=pointer]:
+              - img [ref=e241]
+            - generic: "0"
+          - generic "Dislike" [ref=e1737]:
+            - button [ref=e244] [cursor=pointer]:
+              - img [ref=e245]
+            - generic: "0"
+          - generic "Loved It" [ref=e1738]:
+            - button [ref=e248] [cursor=pointer]:
+              - img [ref=e249]
+            - generic: "0"
+    - generic [ref=e1799]:
+      - generic [ref=e1801]:
+        - generic [ref=e1802]: User Ratings
+        - separator
+        - separator
+        - generic [ref=e1803]:
+          - button "click to go to previous month" [ref=e1804] [cursor=pointer]:
+            - img [ref=e1805]
+          - generic [ref=e1807]:
+            - generic [ref=e1808]: Start Date
+            - generic [ref=e1809]:
+              - textbox "Start Date" [disabled] [ref=e1810]: 01-05-2026
+              - group:
+                - generic: Start Date
+          - generic [ref=e1811]:
+            - generic [ref=e1812]: End Date
+            - generic [ref=e1813]:
+              - textbox "End Date" [disabled] [ref=e1814]: 31-05-2026
+              - group:
+                - generic: End Date
+          - button "click to go to next month" [ref=e1815] [cursor=pointer]:
+            - img [ref=e1816]
+      - heading "No user ratings." [level=6] [ref=e1821]:
+        - img [ref=e1822]
+        - text: No user ratings.

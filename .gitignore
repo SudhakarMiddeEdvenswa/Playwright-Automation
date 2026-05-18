@@ -9,3 +9,6 @@ node_modules/
 /package-lock.json
 # Next.js
 .next/
+/tests/captcha.png
+.playwright-mcp/*.log
+.playwright-mcp/*.yml

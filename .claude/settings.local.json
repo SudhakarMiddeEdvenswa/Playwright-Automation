@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp *)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(dir captcha.png)",
+      "Bash(dir .playwright-mcp\\\\captcha.png)",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate"
+    ]
+  }
+}

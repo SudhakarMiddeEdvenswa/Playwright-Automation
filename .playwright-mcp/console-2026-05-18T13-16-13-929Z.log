@@ -1,0 +1,7 @@
+[      28ms] [LOG] {component: , path: /home/ratings, title: Appraisals, state: Object, setType: } @ https://edvenswatech.emportal.me/static/js/main.661aa5ff.js:1
+[     783ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://edvenswatech.emportal.me/api/emportal/feedback/associate/2214/feature/Appraisals:0
+[     834ms] [WARNING] AG Grid: colDef.type 'number' does not correspond to defined gridOptions.columnTypes @ https://edvenswatech.emportal.me/static/js/main.661aa5ff.js:1
+[     834ms] [WARNING] AG Grid: colDef.type 'text' does not correspond to defined gridOptions.columnTypes @ https://edvenswatech.emportal.me/static/js/main.661aa5ff.js:1
+[     835ms] [WARNING] AG Grid: colDef.type 'text' does not correspond to defined gridOptions.columnTypes @ https://edvenswatech.emportal.me/static/js/main.661aa5ff.js:1
+[     835ms] [WARNING] AG Grid: colDef.type 'text' does not correspond to defined gridOptions.columnTypes @ https://edvenswatech.emportal.me/static/js/main.661aa5ff.js:1
+[     835ms] [WARNING] AG Grid: colDef.type 'text' does not correspond to defined gridOptions.columnTypes @ https://edvenswatech.emportal.me/static/js/main.661aa5ff.js:1

@@ -1,0 +1,153 @@
+- generic [ref=e58]:
+  - banner [ref=e59]:
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - button "open drawer" [ref=e63] [cursor=pointer]:
+          - img [ref=e64]
+        - img [ref=e67]
+      - img "Auth Logo" [ref=e69] [cursor=pointer]
+      - generic [ref=e70]:
+        - paragraph [ref=e71]: UK Score 701
+        - paragraph [ref=e80]: Midde Sudhakar
+        - button [ref=e81] [cursor=pointer]:
+          - img [ref=e82]
+        - button "Open Settings" [ref=e85] [cursor=pointer]:
+          - img "sudhakar.midde@edvenswatech.com" [ref=e87]
+  - generic [ref=e89]:
+    - button [ref=e91] [cursor=pointer]:
+      - img [ref=e92]
+    - separator [ref=e94]
+    - list [ref=e95]:
+      - listitem [ref=e96]:
+        - button "Home" [ref=e97] [cursor=pointer]:
+          - img [ref=e99]
+          - generic:
+            - generic: Home
+      - listitem [ref=e101]:
+        - button "Manage Tasks Manage Tasks" [ref=e102] [cursor=pointer]:
+          - generic "Manage Tasks" [ref=e104]:
+            - img [ref=e105]
+          - generic:
+            - generic: Manage Tasks
+      - listitem [ref=e107]:
+        - button "Manage Timesheets Manage Timesheets" [ref=e108] [cursor=pointer]:
+          - generic "Manage Timesheets" [ref=e110]:
+            - img [ref=e111]
+          - generic:
+            - generic: Manage Timesheets
+      - listitem [ref=e113]:
+        - button "Ratings" [ref=e114] [cursor=pointer]:
+          - img [ref=e116]
+          - generic:
+            - generic: Ratings
+      - listitem [ref=e118]:
+        - button "ENS" [ref=e119] [cursor=pointer]:
+          - img [ref=e121]
+          - generic:
+            - generic: ENS
+      - listitem [ref=e123]:
+        - button "Release Notes" [ref=e124] [cursor=pointer]:
+          - img [ref=e126]
+          - generic:
+            - generic: Release Notes
+      - listitem [ref=e128]:
+        - button "Feedback" [ref=e129] [cursor=pointer]:
+          - img [ref=e131]
+          - generic:
+            - generic: Feedback
+  - main [ref=e133]:
+    - generic [ref=e134]:
+      - navigation "breadcrumb" [ref=e135]:
+        - list [ref=e136]:
+          - listitem [ref=e137]:
+            - button "Home" [disabled]:
+              - img
+              - generic:
+                - paragraph: Home
+      - generic [ref=e138]:
+        - paragraph [ref=e139]:
+          - text: Powered By
+          - link "Visit BUNAI" [ref=e140] [cursor=pointer]:
+            - /url: https://bunai.edvenswa.ai/
+            - text: Edvenswa.AI
+        - generic "Like" [ref=e142]:
+          - button [disabled]:
+            - img
+    - generic [ref=e143]:
+      - generic [ref=e144]:
+        - generic [ref=e148]:
+          - generic [ref=e149]: Good Evening, Midde Sudhakar
+          - paragraph [ref=e150]:
+            - text: For Detailed Analytics,Visit
+            - link "ENS" [ref=e151] [cursor=pointer]:
+              - /url: https://ens.emportal.me/admin/dashboard
+        - generic [ref=e154] [cursor=pointer]:
+          - text: 🌿 We are excited to launch our
+          - strong [ref=e155]: Employee Wellness Program
+          - text: "- Empowering your physical, mental, and emotional well-being for a healthier, happier you! 👉 Register Now 👈"
+      - generic [ref=e158]:
+        - generic [ref=e160]:
+          - paragraph [ref=e161]: My Timecards
+          - button "click to go to previous month" [ref=e162] [cursor=pointer]:
+            - img [ref=e163]
+          - generic [ref=e165]:
+            - generic [ref=e166]: Start Date
+            - generic [ref=e167]:
+              - textbox "Start Date" [ref=e168]: 2026-05-01
+              - group:
+                - generic: Start Date
+          - generic [ref=e169]:
+            - generic [ref=e170]: End Date
+            - generic [ref=e171]:
+              - textbox "End Date" [ref=e172]: 2026-05-31
+              - group:
+                - generic: End Date
+          - button "click to go to next month" [ref=e173] [cursor=pointer]:
+            - img [ref=e174]
+        - generic [ref=e177]:
+          - treegrid [ref=e179]:
+            - rowgroup [ref=e180]:
+              - row "Ast ID Associate Name Start date End date Hours Status" [ref=e181]:
+                - columnheader "Ast ID" [ref=e182]:
+                  - text: 
+                  - generic [ref=e184] [cursor=pointer]: 
+                  - generic [ref=e185] [cursor=pointer]: Ast ID
+                  - text: 
+                  - generic:    
+                - columnheader "Associate Name" [ref=e186]:
+                  - text: 
+                  - generic [ref=e188] [cursor=pointer]: 
+                  - generic [ref=e189] [cursor=pointer]: Associate Name
+                  - text: 
+                  - generic:    
+                - columnheader "Start date" [ref=e190]:
+                  - text: 
+                  - generic [ref=e192] [cursor=pointer]: 
+                  - generic [ref=e193] [cursor=pointer]: Start date
+                  - text: 
+                  - generic:    
+                - columnheader "End date" [ref=e194]:
+                  - text: 
+                  - generic [ref=e196] [cursor=pointer]: 
+                  - generic [ref=e197] [cursor=pointer]: End date
+                  - text: 
+                  - generic:    
+                - columnheader "Hours" [ref=e198]:
+                  - text: 
+                  - generic [ref=e200] [cursor=pointer]: 
+                  - generic [ref=e201] [cursor=pointer]: Hours
+                  - text: 
+                  - generic:    
+                - columnheader "Status" [ref=e202]:
+                  - text: 
+                  - generic [ref=e204] [cursor=pointer]: 
+                  - generic [ref=e205] [cursor=pointer]: Status
+                  - text: 
+                  - generic:    
+            - rowgroup [ref=e206]
+            - rowgroup
+            - rowgroup
+            - rowgroup
+            - rowgroup
+            - rowgroup
+          - text:    

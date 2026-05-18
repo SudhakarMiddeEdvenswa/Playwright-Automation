@@ -1,0 +1,333 @@
+- generic [ref=e58]:
+  - banner [ref=e59]:
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - button "open drawer" [ref=e63] [cursor=pointer]:
+          - img [ref=e64]
+        - img [ref=e67]
+      - img "Auth Logo" [ref=e69] [cursor=pointer]
+      - generic [ref=e70]:
+        - paragraph [ref=e71]: UK Score 701
+        - paragraph [ref=e80]: Midde Sudhakar
+        - button [ref=e81] [cursor=pointer]:
+          - img [ref=e82]
+        - button "Open Settings" [ref=e85] [cursor=pointer]:
+          - img "sudhakar.midde@edvenswatech.com" [ref=e87]
+  - generic [ref=e89]:
+    - button [ref=e91] [cursor=pointer]:
+      - img [ref=e92]
+    - separator [ref=e94]
+    - list [ref=e95]:
+      - listitem [ref=e96]:
+        - button "Home" [ref=e97] [cursor=pointer]:
+          - img [ref=e99]
+          - generic:
+            - generic: Home
+      - listitem [ref=e101]:
+        - button "Manage Tasks Manage Tasks" [ref=e102] [cursor=pointer]:
+          - generic "Manage Tasks" [ref=e104]:
+            - img [ref=e105]
+          - generic:
+            - generic: Manage Tasks
+      - listitem [ref=e107]:
+        - button "Manage Timesheets Manage Timesheets" [ref=e108] [cursor=pointer]:
+          - generic "Manage Timesheets" [ref=e110]:
+            - img [ref=e111]
+          - generic:
+            - generic: Manage Timesheets
+      - listitem [ref=e113]:
+        - button "Ratings" [ref=e114] [cursor=pointer]:
+          - img [ref=e116]
+          - generic:
+            - generic: Ratings
+      - listitem [ref=e118]:
+        - button "ENS" [ref=e119] [cursor=pointer]:
+          - img [ref=e121]
+          - generic:
+            - generic: ENS
+      - listitem [ref=e123]:
+        - button "Release Notes" [ref=e124] [cursor=pointer]:
+          - img [ref=e126]
+          - generic:
+            - generic: Release Notes
+      - listitem [ref=e128]:
+        - button "Feedback" [ref=e129] [cursor=pointer]:
+          - img [ref=e131]
+          - generic:
+            - generic: Feedback
+  - main [ref=e133]:
+    - generic [ref=e134]:
+      - navigation "breadcrumb" [ref=e135]:
+        - list [ref=e136]:
+          - listitem [ref=e137]:
+            - button "Home" [ref=e232] [cursor=pointer]:
+              - img [ref=e233]
+              - paragraph [ref=e236]: Home
+          - listitem [ref=e237]: ›
+          - listitem [ref=e238]:
+            - button "Appraisals" [ref=e337] [cursor=pointer]:
+              - paragraph [ref=e339]: Appraisals
+          - listitem [ref=e340]: ›
+          - listitem [ref=e341]:
+            - button "PERF Form" [disabled]:
+              - generic:
+                - paragraph: PERF Form
+      - generic [ref=e138]:
+        - paragraph [ref=e139]:
+          - text: Powered By
+          - link "Visit BUNAI" [ref=e140] [cursor=pointer]:
+            - /url: https://bunai.edvenswa.ai/
+            - text: Edvenswa.AI
+        - generic [ref=e141]:
+          - generic "Like" [ref=e239]:
+            - button [ref=e240] [cursor=pointer]:
+              - img [ref=e241]
+            - generic: "0"
+          - generic "Dislike" [ref=e243]:
+            - button [ref=e244] [cursor=pointer]:
+              - img [ref=e245]
+            - generic: "0"
+          - generic "Loved It" [ref=e247]:
+            - button [ref=e248] [cursor=pointer]:
+              - img [ref=e249]
+            - generic: "0"
+    - generic [ref=e342]:
+      - generic [ref=e343]:
+        - generic [ref=e344]:
+          - heading "PERF Rating Sheet" [level=6] [ref=e346]
+          - generic [ref=e348]:
+            - generic [ref=e349]:
+              - generic [ref=e350]: Start Date
+              - generic [ref=e351]:
+                - textbox "Start Date" [disabled] [ref=e352]: 2026-05-16
+                - group:
+                  - generic: Start Date
+            - generic [ref=e353]:
+              - generic [ref=e354]: End Date
+              - generic [ref=e355]:
+                - textbox "End Date" [disabled] [ref=e356]: 2026-05-31
+                - group:
+                  - generic: End Date
+          - generic [ref=e359]:
+            - paragraph [ref=e360]: "Associate Name: Midde Sudhakar"
+            - paragraph [ref=e361]: "Project: Stax Payments"
+            - paragraph [ref=e362]: "Project Manager: Vamsi Priya V"
+            - paragraph [ref=e363]: "Rating : 1.8"
+        - generic [ref=e365]:
+          - generic [ref=e366]:
+            - generic [ref=e367]: Project Manager
+            - generic [ref=e368]:
+              - combobox "Project Manager Vamsi Priya V" [ref=e369] [cursor=pointer]: Vamsi Priya V
+              - textbox: "[object Object]"
+              - img
+              - group:
+                - generic: Project Manager
+          - button "View Tasks" [ref=e370] [cursor=pointer]: View Tasks
+        - img [ref=e372]
+      - generic [ref=e374]:
+        - generic [ref=e375]:
+          - heading "Collaboration" [level=5] [ref=e828]
+          - generic [ref=e377]:
+            - button "Expand All" [ref=e829] [cursor=pointer]: Expand All
+            - img [ref=e379]
+        - generic [ref=e381]:
+          - button "Team Contribution 0.5 Stars 1 Star 1.5 Stars 2 Stars 2.5 Stars 3 Stars 3.5 Stars 4 Stars 4.5 Stars 5 Stars Empty" [ref=e831] [cursor=pointer]:
+            - generic [ref=e835]:
+              - generic [ref=e836]:
+                - paragraph [ref=e837]: Team Contribution
+                - img [ref=e838]
+              - generic [ref=e841]:
+                - generic [ref=e842]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e843]: 0.5 Stars
+                  - radio "0.5 Stars" [ref=e844]
+                  - generic [ref=e845]:
+                    - generic:
+                      - img
+                    - generic [ref=e846]: 1 Star
+                  - radio "1 Star" [ref=e847]
+                - generic [ref=e848]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e849]: 1.5 Stars
+                  - radio "1.5 Stars" [ref=e850]
+                  - generic [ref=e851]:
+                    - generic:
+                      - img
+                    - generic [ref=e852]: 2 Stars
+                  - radio "2 Stars" [ref=e853]
+                - generic [ref=e854]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e855]: 2.5 Stars
+                  - radio "2.5 Stars" [ref=e856]
+                  - generic [ref=e857]:
+                    - generic:
+                      - img
+                    - generic [ref=e858]: 3 Stars
+                  - radio "3 Stars" [ref=e859]
+                - generic [ref=e860]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e861]: 3.5 Stars
+                  - radio "3.5 Stars" [ref=e862]
+                  - generic [ref=e863]:
+                    - generic:
+                      - img
+                    - generic [ref=e864]: 4 Stars
+                  - radio "4 Stars" [ref=e865]
+                - generic [ref=e866]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e867]: 4.5 Stars
+                  - radio "4.5 Stars" [ref=e868]
+                  - generic [ref=e869]:
+                    - generic:
+                      - img
+                    - generic [ref=e870]: 5 Stars
+                  - radio "5 Stars" [ref=e871]
+                - generic:
+                  - radio "Empty" [ref=e872]
+                  - generic [ref=e873]: Empty
+            - img [ref=e875]
+          - button "Adaptability & Flexibility 0.5 Stars 1 Star 1.5 Stars 2 Stars 2.5 Stars 3 Stars 3.5 Stars 4 Stars 4.5 Stars 5 Stars Empty" [ref=e878] [cursor=pointer]:
+            - generic [ref=e882]:
+              - generic [ref=e883]:
+                - paragraph [ref=e884]: Adaptability & Flexibility
+                - img [ref=e885]
+              - generic [ref=e888]:
+                - generic [ref=e889]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e890]: 0.5 Stars
+                  - radio "0.5 Stars" [ref=e891]
+                  - generic [ref=e892]:
+                    - generic:
+                      - img
+                    - generic [ref=e893]: 1 Star
+                  - radio "1 Star" [ref=e894]
+                - generic [ref=e895]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e896]: 1.5 Stars
+                  - radio "1.5 Stars" [ref=e897]
+                  - generic [ref=e898]:
+                    - generic:
+                      - img
+                    - generic [ref=e899]: 2 Stars
+                  - radio "2 Stars" [ref=e900]
+                - generic [ref=e901]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e902]: 2.5 Stars
+                  - radio "2.5 Stars" [ref=e903]
+                  - generic [ref=e904]:
+                    - generic:
+                      - img
+                    - generic [ref=e905]: 3 Stars
+                  - radio "3 Stars" [ref=e906]
+                - generic [ref=e907]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e908]: 3.5 Stars
+                  - radio "3.5 Stars" [ref=e909]
+                  - generic [ref=e910]:
+                    - generic:
+                      - img
+                    - generic [ref=e911]: 4 Stars
+                  - radio "4 Stars" [ref=e912]
+                - generic [ref=e913]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e914]: 4.5 Stars
+                  - radio "4.5 Stars" [ref=e915]
+                  - generic [ref=e916]:
+                    - generic:
+                      - img
+                    - generic [ref=e917]: 5 Stars
+                  - radio "5 Stars" [ref=e918]
+                - generic:
+                  - radio "Empty" [ref=e919]
+                  - generic [ref=e920]: Empty
+            - img [ref=e922]
+          - button "Relationship Building 0.5 Stars 1 Star 1.5 Stars 2 Stars 2.5 Stars 3 Stars 3.5 Stars 4 Stars 4.5 Stars 5 Stars Empty" [ref=e925] [cursor=pointer]:
+            - generic [ref=e929]:
+              - generic [ref=e930]:
+                - paragraph [ref=e931]: Relationship Building
+                - img [ref=e932]
+              - generic [ref=e935]:
+                - generic [ref=e936]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e937]: 0.5 Stars
+                  - radio "0.5 Stars" [ref=e938]
+                  - generic [ref=e939]:
+                    - generic:
+                      - img
+                    - generic [ref=e940]: 1 Star
+                  - radio "1 Star" [ref=e941]
+                - generic [ref=e942]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e943]: 1.5 Stars
+                  - radio "1.5 Stars" [ref=e944]
+                  - generic [ref=e945]:
+                    - generic:
+                      - img
+                    - generic [ref=e946]: 2 Stars
+                  - radio "2 Stars" [ref=e947]
+                - generic [ref=e948]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e949]: 2.5 Stars
+                  - radio "2.5 Stars" [ref=e950]
+                  - generic [ref=e951]:
+                    - generic:
+                      - img
+                    - generic [ref=e952]: 3 Stars
+                  - radio "3 Stars" [ref=e953]
+                - generic [ref=e954]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e955]: 3.5 Stars
+                  - radio "3.5 Stars" [ref=e956]
+                  - generic [ref=e957]:
+                    - generic:
+                      - img
+                    - generic [ref=e958]: 4 Stars
+                  - radio "4 Stars" [ref=e959]
+                - generic [ref=e960]:
+                  - generic:
+                    - generic:
+                      - img
+                    - generic [ref=e961]: 4.5 Stars
+                  - radio "4.5 Stars" [ref=e962]
+                  - generic [ref=e963]:
+                    - generic:
+                      - img
+                    - generic [ref=e964]: 5 Stars
+                  - radio "5 Stars" [ref=e965]
+                - generic:
+                  - radio "Empty" [ref=e966]
+                  - generic [ref=e967]: Empty
+            - img [ref=e969]
+        - generic [ref=e523]:
+          - button "Prev" [ref=e751] [cursor=pointer]: Prev
+          - generic [ref=e525]: 3/5
+          - button "Next" [active] [ref=e527] [cursor=pointer]: Next
+      - button "Submit" [ref=e530] [cursor=pointer]: Submit

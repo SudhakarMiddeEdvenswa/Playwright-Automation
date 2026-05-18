@@ -1,0 +1,190 @@
+- generic [ref=e1]:
+  - generic [ref=e58]:
+    - banner [ref=e59]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - button "open drawer" [ref=e63] [cursor=pointer]:
+            - img [ref=e64]
+          - img [ref=e67]
+        - img "Auth Logo" [ref=e69] [cursor=pointer]
+        - generic [ref=e70]:
+          - paragraph [ref=e71]: UK Score 701
+          - paragraph [ref=e80]: Midde Sudhakar
+          - button [ref=e81] [cursor=pointer]:
+            - img [ref=e82]
+          - button "Open Settings" [ref=e85] [cursor=pointer]:
+            - img "sudhakar.midde@edvenswatech.com" [ref=e87]
+    - generic [ref=e89]:
+      - button [ref=e91] [cursor=pointer]:
+        - img [ref=e92]
+      - separator [ref=e94]
+      - list [ref=e95]:
+        - listitem [ref=e96]:
+          - button "Home" [ref=e97] [cursor=pointer]:
+            - img [ref=e99]
+            - generic:
+              - generic: Home
+        - listitem [ref=e101]:
+          - button "Manage Tasks Manage Tasks" [ref=e102] [cursor=pointer]:
+            - generic "Manage Tasks" [ref=e104]:
+              - img [ref=e105]
+            - generic:
+              - generic: Manage Tasks
+        - listitem [ref=e107]:
+          - button "Manage Timesheets Manage Timesheets" [ref=e108] [cursor=pointer]:
+            - generic "Manage Timesheets" [ref=e110]:
+              - img [ref=e111]
+            - generic:
+              - generic: Manage Timesheets
+        - listitem [ref=e113]:
+          - button "Ratings" [active] [ref=e114] [cursor=pointer]:
+            - img [ref=e116]
+            - generic:
+              - generic: Ratings
+        - listitem [ref=e118]:
+          - button "ENS" [ref=e119] [cursor=pointer]:
+            - img [ref=e121]
+            - generic:
+              - generic: ENS
+        - listitem [ref=e123]:
+          - button "Release Notes" [ref=e124] [cursor=pointer]:
+            - img [ref=e126]
+            - generic:
+              - generic: Release Notes
+        - listitem [ref=e128]:
+          - button "Feedback" [ref=e129] [cursor=pointer]:
+            - img [ref=e131]
+            - generic:
+              - generic: Feedback
+    - main [ref=e133]:
+      - generic [ref=e134]:
+        - navigation "breadcrumb" [ref=e135]:
+          - list [ref=e136]:
+            - listitem [ref=e137]:
+              - button "Home" [ref=e232] [cursor=pointer]:
+                - img [ref=e233]
+                - paragraph [ref=e236]: Home
+            - listitem [ref=e237]: ›
+            - listitem [ref=e238]:
+              - button "Appraisals" [disabled]:
+                - generic:
+                  - paragraph: Appraisals
+        - generic [ref=e138]:
+          - paragraph [ref=e139]:
+            - text: Powered By
+            - link "Visit BUNAI" [ref=e140] [cursor=pointer]:
+              - /url: https://bunai.edvenswa.ai/
+              - text: Edvenswa.AI
+          - generic [ref=e141]:
+            - generic "Like" [ref=e239]:
+              - button [ref=e240] [cursor=pointer]:
+                - img [ref=e241]
+              - generic: "0"
+            - generic "Dislike" [ref=e243]:
+              - button [ref=e244] [cursor=pointer]:
+                - img [ref=e245]
+              - generic: "0"
+            - generic "Loved It" [ref=e247]:
+              - button [ref=e248] [cursor=pointer]:
+                - img [ref=e249]
+              - generic: "0"
+      - generic [ref=e252]:
+        - generic [ref=e254]:
+          - generic [ref=e255]: User Ratings
+          - separator
+          - separator
+          - generic [ref=e256]:
+            - button "click to go to previous month" [ref=e257] [cursor=pointer]:
+              - img [ref=e258]
+            - generic [ref=e260]:
+              - generic [ref=e261]: Start Date
+              - generic [ref=e262]:
+                - textbox "Start Date" [disabled] [ref=e263]: 01-05-2026
+                - group:
+                  - generic: Start Date
+            - generic [ref=e264]:
+              - generic [ref=e265]: End Date
+              - generic [ref=e266]:
+                - textbox "End Date" [disabled] [ref=e267]: 31-05-2026
+                - group:
+                  - generic: End Date
+            - button "click to go to next month" [ref=e268] [cursor=pointer]:
+              - img [ref=e269]
+            - generic [ref=e271] [cursor=pointer]:
+              - checkbox "Average Ratings" [ref=e274]
+              - generic [ref=e277]: Average Ratings
+        - generic [ref=e281]:
+          - treegrid [ref=e283]:
+            - rowgroup [ref=e284]:
+              - row "Ast ID Associate Name Manager Name Start Date End Date Comments PERF Rating" [ref=e285]:
+                - columnheader "Ast ID" [ref=e286]:
+                  - text: 
+                  - generic [ref=e288] [cursor=pointer]: 
+                  - generic [ref=e289] [cursor=pointer]: Ast ID
+                  - text: 
+                  - generic:    
+                - columnheader "Associate Name" [ref=e290]:
+                  - text: 
+                  - generic [ref=e292] [cursor=pointer]: 
+                  - generic [ref=e293] [cursor=pointer]: Associate Name
+                  - text: 
+                  - generic:    
+                - columnheader "Manager Name" [ref=e294]:
+                  - text: 
+                  - generic [ref=e296] [cursor=pointer]: 
+                  - generic [ref=e297] [cursor=pointer]: Manager Name
+                  - text: 
+                  - generic:    
+                - columnheader "Start Date" [ref=e298]:
+                  - text: 
+                  - generic [ref=e300] [cursor=pointer]: 
+                  - generic [ref=e301] [cursor=pointer]: Start Date
+                  - text: 
+                  - generic:    
+                - columnheader "End Date" [ref=e302]:
+                  - text: 
+                  - generic [ref=e304] [cursor=pointer]: 
+                  - generic [ref=e305] [cursor=pointer]: End Date
+                  - text: 
+                  - generic:    
+                - columnheader "Comments" [ref=e306]:
+                  - text: 
+                  - generic [ref=e308] [cursor=pointer]: 
+                  - generic [ref=e309] [cursor=pointer]: Comments
+                  - text: 
+                  - generic:    
+                - columnheader "PERF Rating" [ref=e310]:
+                  - text: 
+                  - generic [ref=e312] [cursor=pointer]: 
+                  - generic [ref=e313] [cursor=pointer]: PERF Rating
+                  - text: 
+                  - generic:    
+            - rowgroup [ref=e314]:
+              - row "2214 User Overview Vamsi Priya V 01-May-2026 15-May-2026 No Feedback Available 4.96" [ref=e315]:
+                - gridcell "2214" [ref=e316]
+                - gridcell "User Overview" [ref=e317]:
+                  - generic "User Overview" [ref=e318] [cursor=pointer]: Midde Sudhakar
+                - gridcell "Vamsi Priya V" [ref=e319]
+                - gridcell "01-May-2026" [ref=e320]
+                - gridcell "15-May-2026" [ref=e321]
+                - gridcell "No Feedback Available" [ref=e322]:
+                  - generic [ref=e323] [cursor=pointer]: No Feedback Available
+                - gridcell "4.96" [ref=e324]
+              - row "2214 User Overview Click on Associate name 16-May-2026 31-May-2026 No Feedback Available 0" [ref=e325]:
+                - gridcell "2214" [ref=e326]
+                - gridcell "User Overview" [ref=e327]:
+                  - generic "User Overview" [ref=e328] [cursor=pointer]: Midde Sudhakar
+                - gridcell "Click on Associate name" [ref=e329]: Select Project Manager
+                - gridcell "16-May-2026" [ref=e330]
+                - gridcell "31-May-2026" [ref=e331]
+                - gridcell "No Feedback Available" [ref=e332]:
+                  - generic [ref=e333] [cursor=pointer]: No Feedback Available
+                - gridcell "0" [ref=e334]
+            - rowgroup
+            - rowgroup
+            - rowgroup
+            - rowgroup
+            - rowgroup
+          - text:    
+  - tooltip "Ratings" [ref=e335]:
+    - generic [ref=e336]: Ratings

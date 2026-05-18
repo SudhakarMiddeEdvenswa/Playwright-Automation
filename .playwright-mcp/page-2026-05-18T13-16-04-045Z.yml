@@ -1,0 +1,272 @@
+- generic [ref=e58]:
+  - banner [ref=e59]:
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - button "open drawer" [ref=e1718] [cursor=pointer]:
+          - img [ref=e64]
+        - img [ref=e1719]
+      - img "Auth Logo" [ref=e1720] [cursor=pointer]
+      - generic [ref=e70]:
+        - paragraph [ref=e71]: UK Score 701
+        - paragraph [ref=e80]: Midde Sudhakar
+        - button [ref=e81] [cursor=pointer]:
+          - img [ref=e82]
+        - button "Open Settings" [ref=e1721] [cursor=pointer]:
+          - img "sudhakar.midde@edvenswatech.com" [ref=e1722]
+  - generic [ref=e89]:
+    - button [ref=e91] [cursor=pointer]:
+      - img [ref=e92]
+    - separator [ref=e94]
+    - list [ref=e95]:
+      - listitem [ref=e96]:
+        - button "Home" [ref=e1723] [cursor=pointer]:
+          - img [ref=e99]
+          - generic:
+            - generic: Home
+      - listitem [ref=e101]:
+        - button "Manage Tasks Manage Tasks" [ref=e1724] [cursor=pointer]:
+          - generic "Manage Tasks" [ref=e1725]:
+            - img [ref=e105]
+          - generic:
+            - generic: Manage Tasks
+      - listitem [ref=e107]:
+        - button "Manage Timesheets Manage Timesheets" [ref=e1726] [cursor=pointer]:
+          - generic "Manage Timesheets" [ref=e1727]:
+            - img [ref=e111]
+          - generic:
+            - generic: Manage Timesheets
+      - listitem [ref=e113]:
+        - button "Ratings" [ref=e1728] [cursor=pointer]:
+          - img [ref=e116]
+          - generic:
+            - generic: Ratings
+      - listitem [ref=e118]:
+        - button "ENS" [ref=e1729] [cursor=pointer]:
+          - img [ref=e121]
+          - generic:
+            - generic: ENS
+      - listitem [ref=e123]:
+        - button "Release Notes" [ref=e1730] [cursor=pointer]:
+          - img [ref=e126]
+          - generic:
+            - generic: Release Notes
+      - listitem [ref=e128]:
+        - button "Feedback" [ref=e1731] [cursor=pointer]:
+          - img [ref=e131]
+          - generic:
+            - generic: Feedback
+  - main [ref=e133]:
+    - generic [ref=e134]:
+      - navigation "breadcrumb" [ref=e1732]:
+        - list [ref=e136]:
+          - listitem [ref=e137]:
+            - button "Home" [ref=e1733] [cursor=pointer]:
+              - img [ref=e233]
+              - paragraph [ref=e236]: Home
+          - listitem [ref=e237]: ›
+          - listitem [ref=e238]:
+            - button "Appraisals" [ref=e1734] [cursor=pointer]:
+              - paragraph [ref=e339]: Appraisals
+          - listitem [ref=e340]: ›
+          - listitem [ref=e341]:
+            - button "PERF Form" [disabled]:
+              - generic:
+                - paragraph: PERF Form
+      - generic [ref=e138]:
+        - paragraph [ref=e139]:
+          - text: Powered By
+          - link "Visit BUNAI" [ref=e1735] [cursor=pointer]:
+            - /url: https://bunai.edvenswa.ai/
+            - text: Edvenswa.AI
+        - generic [ref=e141]:
+          - generic "Like" [ref=e1736]:
+            - button [ref=e240] [cursor=pointer]:
+              - img [ref=e241]
+            - generic: "0"
+          - generic "Dislike" [ref=e1737]:
+            - button [ref=e244] [cursor=pointer]:
+              - img [ref=e245]
+            - generic: "0"
+          - generic "Loved It" [ref=e1738]:
+            - button [ref=e248] [cursor=pointer]:
+              - img [ref=e249]
+            - generic: "0"
+    - generic [ref=e342]:
+      - generic [ref=e343]:
+        - generic [ref=e344]:
+          - heading "PERF Rating Sheet" [level=6] [ref=e1739]
+          - generic [ref=e348]:
+            - generic [ref=e349]:
+              - generic [ref=e350]: Start Date
+              - generic [ref=e351]:
+                - textbox "Start Date" [disabled] [ref=e1740]: 2026-05-16
+                - group:
+                  - generic: Start Date
+            - generic [ref=e353]:
+              - generic [ref=e354]: End Date
+              - generic [ref=e355]:
+                - textbox "End Date" [disabled] [ref=e1741]: 2026-05-31
+                - group:
+                  - generic: End Date
+          - generic [ref=e359]:
+            - paragraph [ref=e360]: "Associate Name: Midde Sudhakar"
+            - paragraph [ref=e361]: "Project: Stax Payments"
+            - paragraph [ref=e362]: "Project Manager: Vamsi Priya V"
+            - paragraph [ref=e363]: "UK Score: 0"
+        - generic [ref=e365]:
+          - generic [ref=e366]:
+            - generic [ref=e367]: Project Manager
+            - generic [ref=e368]:
+              - combobox "Project Manager Vamsi Priya V" [ref=e1742] [cursor=pointer]: Vamsi Priya V
+              - textbox: "[object Object]"
+              - img
+              - group:
+                - generic: Project Manager
+          - button "View Tasks" [ref=e1743] [cursor=pointer]: View Tasks
+        - img [ref=e372]
+      - generic [ref=e374]:
+        - generic [ref=e375]:
+          - heading "Capability" [level=5] [ref=e1744]
+          - generic [ref=e377]:
+            - button "Collapse All" [ref=e1745] [cursor=pointer]: Collapse All
+            - img [ref=e379]
+        - generic [ref=e381]:
+          - button "Execution Efficiency User submission completed. Ratings are read-only." [ref=e1747] [cursor=pointer]:
+            - generic [ref=e1751]:
+              - generic [ref=e1752]:
+                - paragraph [ref=e1753]: Execution Efficiency
+                - img [ref=e1754]
+              - generic "User submission completed. Ratings are read-only." [ref=e1756]:
+                - img "4.5 Stars":
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+            - img [ref=e1758]
+          - button "Quality of Output User submission completed. Ratings are read-only." [ref=e1761] [cursor=pointer]:
+            - generic [ref=e1765]:
+              - generic [ref=e1766]:
+                - paragraph [ref=e1767]: Quality of Output
+                - img [ref=e1768]
+              - generic "User submission completed. Ratings are read-only." [ref=e1770]:
+                - img "4.5 Stars":
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+            - img [ref=e1772]
+          - button "Accountability and Ownership User submission completed. Ratings are read-only." [ref=e1775] [cursor=pointer]:
+            - generic [ref=e1779]:
+              - generic [ref=e1780]:
+                - paragraph [ref=e1781]: Accountability and Ownership
+                - img [ref=e1782]
+              - generic "User submission completed. Ratings are read-only." [ref=e1784]:
+                - img "4.5 Stars":
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img
+                    - generic:
+                      - generic:
+                        - img
+            - img [ref=e1786]
+        - generic [ref=e523]:
+          - generic [ref=e524]:
+            - button "Prev" [disabled]
+          - generic [ref=e525]: 1/5
+          - button "Next" [ref=e1788] [cursor=pointer]: Next
+      - alert [ref=e1789]:
+        - img [ref=e1791]
+        - generic [ref=e1793]: Ratings Submitted Successfully!
+        - button "Close" [ref=e1795] [cursor=pointer]:
+          - img [ref=e1796]

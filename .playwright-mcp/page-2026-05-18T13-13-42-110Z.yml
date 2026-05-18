@@ -1,0 +1,468 @@
+- generic [ref=e1]:
+  - generic [ref=e58]:
+    - banner [ref=e59]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - button [ref=e1547] [cursor=pointer]:
+            - img [ref=e64]
+          - img [ref=e1548]
+        - img [ref=e1549] [cursor=pointer]
+        - generic [ref=e70]:
+          - paragraph [ref=e71]: UK Score 701
+          - paragraph [ref=e80]: Midde Sudhakar
+          - button [ref=e81] [cursor=pointer]:
+            - img [ref=e82]
+          - button [ref=e1550] [cursor=pointer]:
+            - img [ref=e1551]
+    - generic [ref=e89]:
+      - button [ref=e91] [cursor=pointer]:
+        - img [ref=e92]
+      - separator [ref=e94]
+      - list [ref=e95]:
+        - listitem [ref=e96]:
+          - button [ref=e1552] [cursor=pointer]:
+            - img [ref=e99]
+        - listitem [ref=e101]:
+          - button [ref=e1553] [cursor=pointer]:
+            - img [ref=e105]
+        - listitem [ref=e107]:
+          - button [ref=e1555] [cursor=pointer]:
+            - img [ref=e111]
+        - listitem [ref=e113]:
+          - button [ref=e1557] [cursor=pointer]:
+            - img [ref=e116]
+        - listitem [ref=e118]:
+          - button [ref=e1558] [cursor=pointer]:
+            - img [ref=e121]
+        - listitem [ref=e123]:
+          - button [ref=e1559] [cursor=pointer]:
+            - img [ref=e126]
+        - listitem [ref=e128]:
+          - button [ref=e1560] [cursor=pointer]:
+            - img [ref=e131]
+    - main [ref=e133]:
+      - generic [ref=e134]:
+        - navigation [ref=e1561]:
+          - list [ref=e136]:
+            - listitem [ref=e137]:
+              - button [ref=e1562] [cursor=pointer]:
+                - img [ref=e233]
+                - paragraph [ref=e236]: Home
+            - listitem [ref=e237]: ›
+            - listitem [ref=e238]:
+              - button [ref=e1563] [cursor=pointer]:
+                - paragraph [ref=e339]: Appraisals
+            - listitem [ref=e340]: ›
+            - listitem [ref=e341]:
+              - button [disabled]:
+                - generic:
+                  - paragraph: PERF Form
+        - generic [ref=e138]:
+          - paragraph [ref=e139]:
+            - text: Powered By
+            - link [ref=e1564] [cursor=pointer]:
+              - /url: https://bunai.edvenswa.ai/
+              - text: Edvenswa.AI
+          - generic [ref=e141]:
+            - button [ref=e240] [cursor=pointer]:
+              - img [ref=e241]
+            - button [ref=e244] [cursor=pointer]:
+              - img [ref=e245]
+            - button [ref=e248] [cursor=pointer]:
+              - img [ref=e249]
+      - generic [ref=e342]:
+        - generic [ref=e343]:
+          - generic [ref=e344]:
+            - heading [level=6] [ref=e1568]: PERF Rating Sheet
+            - generic [ref=e348]:
+              - generic [ref=e349]:
+                - generic [ref=e350]: Start Date
+                - generic [ref=e351]:
+                  - textbox [disabled] [ref=e1569]: 2026-05-16
+                  - group:
+                    - generic: Start Date
+              - generic [ref=e353]:
+                - generic [ref=e354]: End Date
+                - generic [ref=e355]:
+                  - textbox [disabled] [ref=e1570]: 2026-05-31
+                  - group:
+                    - generic: End Date
+            - generic [ref=e359]:
+              - paragraph [ref=e360]: "Associate Name: Midde Sudhakar"
+              - paragraph [ref=e361]: "Project: Stax Payments"
+              - paragraph [ref=e362]: "Project Manager: Vamsi Priya V"
+              - paragraph [ref=e363]: "Rating : 4.5"
+          - generic [ref=e365]:
+            - generic [ref=e366]:
+              - generic [ref=e367]: Project Manager
+              - generic [ref=e368]:
+                - combobox [ref=e1571] [cursor=pointer]: Vamsi Priya V
+                - textbox: "[object Object]"
+                - img
+                - group:
+                  - generic: Project Manager
+            - button [ref=e1572] [cursor=pointer]: View Tasks
+          - img [ref=e372]
+        - generic [ref=e374]:
+          - generic [ref=e375]:
+            - heading [level=5] [ref=e1573]: Customer
+            - generic [ref=e377]:
+              - button [ref=e1574] [cursor=pointer]: Collapse All
+              - img [ref=e379]
+          - generic [ref=e381]:
+            - generic [ref=e1262]:
+              - button [expanded] [ref=e1575] [cursor=pointer]:
+                - generic [ref=e1267]:
+                  - generic [ref=e1268]:
+                    - paragraph [ref=e1269]: Convenience
+                    - img [ref=e1270]
+                  - generic [ref=e1273]:
+                    - generic [ref=e1274]:
+                      - img
+                      - generic [ref=e1275]: 0.5 Stars
+                      - radio [ref=e1576]
+                      - generic [ref=e1277]:
+                        - generic:
+                          - img
+                        - generic [ref=e1278]: 1 Star
+                      - radio [ref=e1577]
+                    - generic [ref=e1280]:
+                      - img
+                      - generic [ref=e1281]: 1.5 Stars
+                      - radio [ref=e1578]
+                      - generic [ref=e1283]:
+                        - generic:
+                          - img
+                        - generic [ref=e1284]: 2 Stars
+                      - radio [ref=e1579]
+                    - generic [ref=e1286]:
+                      - img
+                      - generic [ref=e1287]: 2.5 Stars
+                      - radio [ref=e1580]
+                      - generic [ref=e1289]:
+                        - generic:
+                          - img
+                        - generic [ref=e1290]: 3 Stars
+                      - radio [ref=e1581]
+                    - generic [ref=e1292]:
+                      - img
+                      - generic [ref=e1293]: 3.5 Stars
+                      - radio [ref=e1582]
+                      - generic [ref=e1295]:
+                        - generic:
+                          - img
+                        - generic [ref=e1296]: 4 Stars
+                      - radio [ref=e1583]
+                    - generic [ref=e1298]:
+                      - generic [ref=e1543]:
+                        - generic:
+                          - img
+                        - generic [ref=e1299]: 4.5 Stars
+                      - radio [checked] [ref=e1584]
+                      - generic [ref=e1301]:
+                        - generic:
+                          - img
+                        - generic [ref=e1302]: 5 Stars
+                      - radio [ref=e1585]
+                    - radio [ref=e1586]
+                    - generic [ref=e1305]: Empty
+                - img [ref=e1307]
+              - region [ref=e1454]:
+                - generic [ref=e1456]:
+                  - generic [ref=e1460]:
+                    - textbox [ref=e1587]:
+                      - /placeholder: Enter your comments...
+                      - text: Always be commitment to understanding customer requirements and delivering with ease and efficiency to exceed their expectations. Also make sure to reach out the respected POC's to complete/fulfill the commitment.
+                    - button [ref=e1588] [cursor=pointer]:
+                      - img [ref=e1464]
+                    - group
+                  - button [ref=e1589] [cursor=pointer]:
+                    - paragraph [ref=e1470]: View Previous Comments
+                    - img [ref=e1472]
+            - generic [ref=e1309]:
+              - button [expanded] [ref=e1590] [cursor=pointer]:
+                - generic [ref=e1314]:
+                  - generic [ref=e1315]:
+                    - paragraph [ref=e1316]: Value Creation
+                    - img [ref=e1317]
+                  - generic [ref=e1320]:
+                    - generic [ref=e1321]:
+                      - img
+                      - generic [ref=e1322]: 0.5 Stars
+                      - radio [ref=e1591]
+                      - generic [ref=e1324]:
+                        - generic:
+                          - img
+                        - generic [ref=e1325]: 1 Star
+                      - radio [ref=e1592]
+                    - generic [ref=e1327]:
+                      - img
+                      - generic [ref=e1328]: 1.5 Stars
+                      - radio [ref=e1593]
+                      - generic [ref=e1330]:
+                        - generic:
+                          - img
+                        - generic [ref=e1331]: 2 Stars
+                      - radio [ref=e1594]
+                    - generic [ref=e1333]:
+                      - img
+                      - generic [ref=e1334]: 2.5 Stars
+                      - radio [ref=e1595]
+                      - generic [ref=e1336]:
+                        - generic:
+                          - img
+                        - generic [ref=e1337]: 3 Stars
+                      - radio [ref=e1596]
+                    - generic [ref=e1339]:
+                      - img
+                      - generic [ref=e1340]: 3.5 Stars
+                      - radio [ref=e1597]
+                      - generic [ref=e1342]:
+                        - generic:
+                          - img
+                        - generic [ref=e1343]: 4 Stars
+                      - radio [ref=e1598]
+                    - generic [ref=e1345]:
+                      - generic [ref=e1544]:
+                        - generic:
+                          - img
+                        - generic [ref=e1346]: 4.5 Stars
+                      - radio [checked] [ref=e1599]
+                      - generic [ref=e1348]:
+                        - generic:
+                          - img
+                        - generic [ref=e1349]: 5 Stars
+                      - radio [ref=e1600]
+                    - radio [ref=e1601]
+                    - generic [ref=e1352]: Empty
+                - img [ref=e1354]
+              - region [ref=e1477]:
+                - generic [ref=e1479]:
+                  - generic [ref=e1483]:
+                    - textbox [ref=e1602]:
+                      - /placeholder: Enter your comments...
+                      - text: Working on value creation by learning AI Tools, prompt engineering, and also doing some additional value creation, like learning Selenium with Python and Playwright. Started certification for Cribl Admin - Edge. Implemented Emportal automation to help team members.
+                    - button [ref=e1603] [cursor=pointer]:
+                      - img [ref=e1487]
+                    - group
+                  - button [ref=e1604] [cursor=pointer]:
+                    - paragraph [ref=e1493]: View Previous Comments
+                    - img [ref=e1495]
+            - generic [ref=e1356]:
+              - button [expanded] [ref=e1605] [cursor=pointer]:
+                - generic [ref=e1361]:
+                  - generic [ref=e1362]:
+                    - paragraph [ref=e1363]: Cost Optimization
+                    - img [ref=e1364]
+                  - generic [ref=e1367]:
+                    - generic [ref=e1368]:
+                      - img
+                      - generic [ref=e1369]: 0.5 Stars
+                      - radio [ref=e1606]
+                      - generic [ref=e1371]:
+                        - generic:
+                          - img
+                        - generic [ref=e1372]: 1 Star
+                      - radio [ref=e1607]
+                    - generic [ref=e1374]:
+                      - img
+                      - generic [ref=e1375]: 1.5 Stars
+                      - radio [ref=e1608]
+                      - generic [ref=e1377]:
+                        - generic:
+                          - img
+                        - generic [ref=e1378]: 2 Stars
+                      - radio [ref=e1609]
+                    - generic [ref=e1380]:
+                      - img
+                      - generic [ref=e1381]: 2.5 Stars
+                      - radio [ref=e1610]
+                      - generic [ref=e1383]:
+                        - generic:
+                          - img
+                        - generic [ref=e1384]: 3 Stars
+                      - radio [ref=e1611]
+                    - generic [ref=e1386]:
+                      - img
+                      - generic [ref=e1387]: 3.5 Stars
+                      - radio [ref=e1612]
+                      - generic [ref=e1389]:
+                        - generic:
+                          - img
+                        - generic [ref=e1390]: 4 Stars
+                      - radio [ref=e1613]
+                    - generic [ref=e1392]:
+                      - generic [ref=e1545]:
+                        - generic:
+                          - img
+                        - generic [ref=e1393]: 4.5 Stars
+                      - radio [checked] [ref=e1614]
+                      - generic [ref=e1395]:
+                        - generic:
+                          - img
+                        - generic [ref=e1396]: 5 Stars
+                      - radio [ref=e1615]
+                    - radio [ref=e1616]
+                    - generic [ref=e1399]: Empty
+                - img [ref=e1401]
+              - region [ref=e1500]:
+                - generic [ref=e1502]:
+                  - generic [ref=e1506]:
+                    - textbox [ref=e1617]:
+                      - /placeholder: Enter your comments...
+                      - text: I have always made significant strides in cost optimization, and his efforts are highly valued. We look forward to his continued contributions to our cost efficiency goals.
+                    - button [ref=e1618] [cursor=pointer]:
+                      - img [ref=e1510]
+                    - group
+                  - button [ref=e1619] [cursor=pointer]:
+                    - paragraph [ref=e1516]: View Previous Comments
+                    - img [ref=e1518]
+            - generic [ref=e1403]:
+              - button [expanded] [ref=e1620] [cursor=pointer]:
+                - generic [ref=e1408]:
+                  - generic [ref=e1409]:
+                    - paragraph [ref=e1410]: Brand Promotion
+                    - img [ref=e1411]
+                  - generic [ref=e1414]:
+                    - generic [ref=e1415]:
+                      - img
+                      - generic [ref=e1416]: 0.5 Stars
+                      - radio [ref=e1621]
+                      - generic [ref=e1418]:
+                        - generic:
+                          - img
+                        - generic [ref=e1419]: 1 Star
+                      - radio [ref=e1622]
+                    - generic [ref=e1421]:
+                      - img
+                      - generic [ref=e1422]: 1.5 Stars
+                      - radio [ref=e1623]
+                      - generic [ref=e1424]:
+                        - generic:
+                          - img
+                        - generic [ref=e1425]: 2 Stars
+                      - radio [ref=e1624]
+                    - generic [ref=e1427]:
+                      - img
+                      - generic [ref=e1428]: 2.5 Stars
+                      - radio [ref=e1625]
+                      - generic [ref=e1430]:
+                        - generic:
+                          - img
+                        - generic [ref=e1431]: 3 Stars
+                      - radio [ref=e1626]
+                    - generic [ref=e1433]:
+                      - img
+                      - generic [ref=e1434]: 3.5 Stars
+                      - radio [ref=e1627]
+                      - generic [ref=e1436]:
+                        - generic:
+                          - img
+                        - generic [ref=e1437]: 4 Stars
+                      - radio [ref=e1628]
+                    - generic [ref=e1439]:
+                      - generic [ref=e1546]:
+                        - generic:
+                          - img
+                        - generic [ref=e1440]: 4.5 Stars
+                      - radio [checked] [ref=e1629]
+                      - generic [ref=e1442]:
+                        - generic:
+                          - img
+                        - generic [ref=e1443]: 5 Stars
+                      - radio [ref=e1630]
+                    - radio [ref=e1631]
+                    - generic [ref=e1446]: Empty
+                - img [ref=e1448]
+              - region [ref=e1523]:
+                - generic [ref=e1525]:
+                  - generic [ref=e1529]:
+                    - textbox [ref=e1632]:
+                      - /placeholder: Enter your comments...
+                      - text: I have always made significant strides in brand promotion, and my efforts are highly valued. I'm looking forward to continued contributions to our brand-building goals.
+                    - button [ref=e1633] [cursor=pointer]:
+                      - img [ref=e1533]
+                    - group
+                  - button [ref=e1634] [cursor=pointer]:
+                    - paragraph [ref=e1539]: View Previous Comments
+                    - img [ref=e1541]
+          - generic [ref=e523]:
+            - button [ref=e1635] [cursor=pointer]: Prev
+            - generic [ref=e525]: 5/5
+        - button [ref=e1636] [cursor=pointer]: Submit
+  - dialog "Confirm" [ref=e1639]:
+    - heading "Confirm" [level=2] [ref=e1640]
+    - generic [ref=e1641]:
+      - paragraph [ref=e1642]: The total rating given is
+      - heading "4.50" [level=6] [ref=e1643]
+      - paragraph [ref=e1644]: The ratings submitted are unable to change once submitted. Do you want to continue?
+      - generic [ref=e1645]:
+        - generic [ref=e1646]:
+          - paragraph [ref=e1647]: Are you using AI during this bi-weekly period?
+          - img [ref=e1648] [cursor=pointer]
+          - generic [ref=e1650]:
+            - generic [ref=e1651] [cursor=pointer]: "Yes"
+            - generic [ref=e1652] [cursor=pointer]: "No"
+        - generic [ref=e1656]:
+          - generic [ref=e1657]:
+            - paragraph [ref=e1658]: Which AI tool(s) did you use?
+            - generic [ref=e1659]:
+              - generic [ref=e1660] [cursor=pointer]: + ChatGPT
+              - generic [ref=e1661] [cursor=pointer]: + Claude
+              - generic [ref=e1662] [cursor=pointer]: + Google Gemini
+              - generic [ref=e1663] [cursor=pointer]: + Microsoft Copilot
+              - generic [ref=e1664] [cursor=pointer]: + Perplexity AI
+              - generic [ref=e1665] [cursor=pointer]: + Meta AI
+              - generic [ref=e1666] [cursor=pointer]: + GitHub Copilot
+              - generic [ref=e1667] [cursor=pointer]: + Cursor
+              - generic [ref=e1668] [cursor=pointer]: + Tabnine
+              - generic [ref=e1669] [cursor=pointer]: + Codeium
+              - generic [ref=e1670] [cursor=pointer]: + Amazon CodeWhisperer
+              - generic [ref=e1671] [cursor=pointer]: + JetBrains AI
+              - generic [ref=e1672] [cursor=pointer]: + Grammarly AI
+              - generic [ref=e1673] [cursor=pointer]: + Notion AI
+              - generic [ref=e1674] [cursor=pointer]: + Quillbot
+              - generic [ref=e1675] [cursor=pointer]: + Wordtune
+              - generic [ref=e1676] [cursor=pointer]: + Microsoft 365 Copilot
+              - generic [ref=e1677] [cursor=pointer]: + Midjourney
+              - generic [ref=e1678] [cursor=pointer]: + DALL-E
+              - generic [ref=e1679] [cursor=pointer]: + Adobe Firefly
+              - generic [ref=e1680] [cursor=pointer]: + Canva AI
+              - generic [ref=e1681] [cursor=pointer]: + Figma AI
+              - generic [ref=e1682] [cursor=pointer]: + Otter.ai
+              - generic [ref=e1683] [cursor=pointer]: + Fireflies.ai
+              - generic [ref=e1684] [cursor=pointer]: + Google Workspace AI
+              - generic [ref=e1685] [cursor=pointer]: + Loom AI
+              - generic [ref=e1686] [cursor=pointer]: + Gamma AI
+              - generic [ref=e1687] [cursor=pointer]: + Beautiful.ai
+              - generic [ref=e1688] [cursor=pointer]: + Power BI Copilot
+              - generic [ref=e1689] [cursor=pointer]: + Tableau AI
+              - generic [ref=e1690] [cursor=pointer]: + Julius AI
+              - generic [ref=e1691] [cursor=pointer]: + CodiumAI
+              - generic [ref=e1692] [cursor=pointer]: + Applitools
+              - generic [ref=e1693] [cursor=pointer]: + Azure OpenAI
+              - generic [ref=e1694] [cursor=pointer]: + AWS Bedrock
+              - generic [ref=e1695] [cursor=pointer]: + Vertex AI
+              - generic [ref=e1696] [cursor=pointer]: + Hugging Face
+              - generic [ref=e1697] [cursor=pointer]: + Replit AI
+              - generic [ref=e1698] [cursor=pointer]: + Runway ML
+              - generic [ref=e1699] [cursor=pointer]: + ElevenLabs
+              - generic [ref=e1700] [cursor=pointer]: + Synthesia
+              - generic [ref=e1701] [cursor=pointer]: + Other
+          - generic [ref=e1702]:
+            - paragraph [ref=e1703]: Where and how did you use it?
+            - generic [ref=e1704]:
+              - generic [ref=e1705]:
+                - textbox [ref=e1706]
+                - group
+              - paragraph [ref=e1707]: 0/1000
+          - generic [ref=e1708]:
+            - paragraph [ref=e1709]: What was the result / outcome?
+            - generic [ref=e1710]:
+              - generic [ref=e1711]:
+                - textbox [ref=e1712]
+                - group
+              - paragraph [ref=e1713]: 0/1000
+    - generic [ref=e1654]:
+      - button "Ok" [ref=e1714] [cursor=pointer]: Ok
+      - button "Cancel" [ref=e1655] [cursor=pointer]: Cancel

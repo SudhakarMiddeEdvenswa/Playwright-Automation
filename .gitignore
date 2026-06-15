@@ -10,3 +10,13 @@ node_modules/
 # Next.js
 .next/
 /tests/captcha.png
+/tests/timesheet-filled.png
+/tests/timesheet-submitted.png
+/tests/timesheet-filling.png
+/tests/self-rating-filled.png
+/tests/self-rating-submitted.png
+.playwright-mcp/*.log
+.playwright-mcp/*.yml
+# Visual Studio Code
+.vscode
+.vscode/settings.json

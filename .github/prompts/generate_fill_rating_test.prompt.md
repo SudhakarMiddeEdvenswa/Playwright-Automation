@@ -8,12 +8,15 @@ Requirements:
 2. Login using:
    Username: sudhakar.midde@edvenswatech.com
    Password: Mar09@2024
+  - Enter the username and password in the respective fields.
+  - Enter ReCaptcha if prompted (Note: This may require manual intervention as automating Captcha is not recommended).
+  - Click the login button to access the dashboard.
 
 3. After login:
 
 - Navigate to the "Rating" tab/module.
 - Select the self-rating period starting from:
-  Start Date: 16-May-2026
+  Start Date: 01-June-2026
 - Select the applicable end date automatically if required.
 
 4. Fill all rating sections with ratings between 4 and 5.

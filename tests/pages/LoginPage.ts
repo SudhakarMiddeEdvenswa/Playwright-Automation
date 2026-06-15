@@ -47,12 +47,19 @@ export class LoginPage {
     ).toBeVisible({ timeout });
   }
 
-  /** True when the authenticated user menu shows the expected display name. */
-  async isLoggedIn(userDisplayName: string): Promise<boolean> {
-    return await this.page
-      .getByRole("button", { name: "User menu" })
-      .getByText(userDisplayName)
-      .isVisible()
-      .catch(() => false);
+  /**
+   * True when the authenticated user menu shows the expected display name. The
+   * name is populated asynchronously after the shell renders, so wait for it.
+   */
+  async isLoggedIn(userDisplayName: string, timeout = 10000): Promise<boolean> {
+    try {
+      await this.page
+        .getByRole("button", { name: "User menu" })
+        .getByText(userDisplayName)
+        .waitFor({ state: "visible", timeout });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

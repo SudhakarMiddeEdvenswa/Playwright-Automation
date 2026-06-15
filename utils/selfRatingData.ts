@@ -39,15 +39,13 @@ export interface RatingSection {
   criteria: RatingCriterion[];
 }
 
-// The self-appraisal period to target. Defaults to the open period the run was
-// validated against. `monthYear` is used to navigate the month picker; `rowDate`
-// is the start date shown in the period row that is clicked to open the form.
+// The self-appraisal period to target. EmPortal 2.0 lists periods on the
+// /admin/my-ratings page; each row shows a "DD/MM/YYYY - DD/MM/YYYY" range and
+// an action button (Start / Continue). `periodStart` matches the start of the
+// range used to find and open the right row.
 export const selfRatingPeriod = {
-  // Display string used to find the row to open (matches "Start Date" column).
-  rowDate: process.env.RATING_START_DATE || "01-Jun-2026",
-  // Year/month the period belongs to, used to navigate the month selector.
-  year: Number(process.env.RATING_YEAR || 2026),
-  month: Number(process.env.RATING_MONTH || 6), // 1-based: 6 = June
+  // Start date of the period row to open, formatted DD/MM/YYYY as shown in the UI.
+  periodStart: process.env.RATING_START_DATE || "01/06/2026",
 };
 
 // Whether to actually submit the rating. Submitting permanently records the

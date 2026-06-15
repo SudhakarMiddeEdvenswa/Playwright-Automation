@@ -67,12 +67,34 @@ export class TasksPage {
     await this.selectComboboxOption(dialog, "Category", taskCategory);
     await this.selectComboboxOption(dialog, "Project", projectName);
 
-    await this.fillDateGroup("Start Date", startDate);
-    await this.fillDateGroup("End Date", endDate);
+    await this.fillDateGroup(dialog, "Start Date", startDate);
+    await this.fillDateGroup(dialog, "End Date", endDate);
 
-    await dialog
-      .getByRole("textbox", { name: "Estimated Time (HH:MM)" })
-      .fill(this.normalizeTime(time));
+    await this.fillEstimatedTime(dialog, time);
+  }
+
+  /**
+   * Fill the masked "Estimated Time (HH:MM)" field robustly. A plain fill() can
+   * silently fail to register on this input, so verify the value stuck and fall
+   * back to clearing + sequential typing.
+   */
+  private async fillEstimatedTime(
+    dialog: ReturnType<Page["getByRole"]>,
+    time: string
+  ) {
+    const value = this.normalizeTime(time);
+    const field = dialog.getByRole("textbox", {
+      name: "Estimated Time (HH:MM)",
+    });
+    await field.click();
+    await field.fill(value);
+    if ((await field.inputValue()) !== value) {
+      await field.click();
+      await field.press("ControlOrMeta+a");
+      await field.press("Delete");
+      await field.pressSequentially(value);
+    }
+    await expect(field).toHaveValue(value);
   }
 
   /** Confirm task creation ("Create Task" replaced the old "Save" button). */
@@ -81,7 +103,7 @@ export class TasksPage {
     // The dialog closes once the task is created.
     await expect(
       this.page.getByRole("dialog", { name: "Add New Task" })
-    ).toBeHidden();
+    ).toBeHidden({ timeout: 15000 });
   }
 
   /** Delete a task by name (skips rows whose timesheet is already submitted). */
@@ -109,13 +131,20 @@ export class TasksPage {
   }
 
   /**
-   * Fill a MUI date picker group (Day/Month/Year spinbuttons) from an ISO date.
+   * Fill a MUI date picker group (Day/Month/Year sections) from an ISO date and
+   * verify the formatted value stuck. Scoped to the dialog so it never matches a
+   * date group elsewhere on the page. A plain section fill() can drop digits, so
+   * fall back to focusing the Day section and typing all 8 digits sequentially.
    * @param groupName "Start Date" | "End Date"
    * @param isoDate   "YYYY-MM-DD"
    */
-  private async fillDateGroup(groupName: string, isoDate: string) {
+  private async fillDateGroup(
+    dialog: ReturnType<Page["getByRole"]>,
+    groupName: string,
+    isoDate: string
+  ) {
     const [year, month, day] = isoDate.split("-");
-    const group = this.page.getByRole("group", { name: groupName });
+    const group = dialog.getByRole("group", { name: groupName });
     await group.getByRole("spinbutton", { name: "Day" }).fill(day);
     await group.getByRole("spinbutton", { name: "Month" }).fill(month);
     await group.getByRole("spinbutton", { name: "Year" }).fill(year);

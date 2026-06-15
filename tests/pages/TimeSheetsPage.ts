@@ -89,6 +89,23 @@ export class TimeSheetsPage {
     await this.page.keyboard.press("Tab");
   }
 
+  /**
+   * Fill every editable weekday (Mon-Fri) cell across all task rows with the
+   * same hour value. Disabled Sat/Sun and Total cells are skipped. Returns the
+   * number of cells filled.
+   */
+  async fillAllWeekdayHours(hours: string): Promise<number> {
+    const editable = this.page.locator(
+      '[role="spinbutton"][aria-label="Hours"]:not([aria-disabled="true"])'
+    );
+    const count = await editable.count();
+    for (let i = 0; i < count; i++) {
+      await editable.nth(i).fill(hours.padStart(2, "0"));
+    }
+    await this.page.keyboard.press("Tab");
+    return count;
+  }
+
   /** Read a task row's weekly Total cell (e.g. "10:00"). */
   async getTaskRowTotal(taskName: string): Promise<string> {
     const row = this.taskRow(taskName);

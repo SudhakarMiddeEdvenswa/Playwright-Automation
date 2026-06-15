@@ -12,7 +12,8 @@
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_evaluate",
       "mcp__playwright__browser_close",
-      "PowerShell(npx playwright test tests/emportal_SelfRatingSubmitTest.spec.ts --project=chromium --reporter=line)"
+      "PowerShell(npx playwright test tests/emportal_SelfRatingSubmitTest.spec.ts --project=chromium --reporter=line)",
+      "mcp__playwright__browser_press_key"
     ]
   }
 }

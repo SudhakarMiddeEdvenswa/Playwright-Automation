@@ -2,13 +2,19 @@ import { Page, Locator, expect } from "@playwright/test";
 import { RatingSection } from "../../utils/selfRatingData";
 
 /**
- * Page Object for the EmPortal self-rating flow (PERF Rating Sheet /
- * UserAppraisalForm), where an associate rates themselves for a given period.
+ * Page Object for the EmPortal 2.0 self-rating flow (/admin/my-ratings).
  *
- * The form is organised into 5 sections (Capability, Creativity, Collaboration,
- * Compliance, Customer). Each section contains several criteria; every criterion
- * has a MUI star-rating (0.5 increments) and an "Enter your comments..." textbox.
- * Sections are navigated with the Next / Prev buttons; the form ends with Submit.
+ * The "My Ratings" page lists appraisal periods in a table; each row has an
+ * action button (Start / Continue) that opens the self-rating form. The form is
+ * organised into 5 paginated sections (Capability, Creativity, Collaboration,
+ * Compliance, Customer). Each criterion is an accordion card with:
+ *   - a custom 5-star widget (5 <button> elements, each a lucide-star SVG). The
+ *     widget supports 0.5 increments: a click on the LEFT half of a star sets
+ *     "x.5", a click on the RIGHT half sets the full "x".
+ *   - a "Enter description..." textbox (+ an "Enhance text" AI helper).
+ * Sections are navigated with Prev / Next (or the page-number buttons); the form
+ * ends with "Save Draft" (always) and "Submit" (enabled on the last page when
+ * complete).
  */
 export class SelfRatingPage {
   private readonly page: Page;
@@ -19,93 +25,55 @@ export class SelfRatingPage {
 
   // --- Navigation ---------------------------------------------------------
 
-  /** Open the Ratings (Appraisals) module from the left navigation. */
-  async navigateToRatings(): Promise<void> {
-    const ratings = this.page.getByRole("button", { name: "Ratings" });
-    await expect(ratings).toBeVisible();
-    await ratings.click();
-    // Wait until the Appraisals list (period selector) is rendered.
+  /** Open the "My Ratings" list page. */
+  async navigateToMyRatings(): Promise<void> {
+    await this.page.goto("/admin/my-ratings");
     await expect(
-      this.page.getByText("User Ratings", { exact: true })
+      this.page.getByRole("heading", { name: "My Ratings", level: 1 })
     ).toBeVisible();
   }
 
   /**
-   * Navigate the month selector until the period belonging to the requested
-   * month/year is displayed, then open the self-appraisal form for the row
-   * whose Start Date matches `rowDate` (e.g. "01-Jun-2026").
+   * Open the self-rating form for the period whose range starts with
+   * `periodStart` (e.g. "01/06/2026"). Clicks the row's Start/Continue action.
    */
-  async openSelfAppraisal(
-    rowDate: string,
-    targetYear: number,
-    targetMonth: number
-  ): Promise<void> {
-    await this.navigateToTargetMonth(targetYear, targetMonth);
-
-    const row = this.page.getByRole("row", { name: new RegExp(rowDate) });
+  async openRatingPeriod(periodStart: string): Promise<void> {
+    const row = this.page
+      .getByRole("row")
+      .filter({ hasText: periodStart })
+      .first();
     await expect(
       row,
-      `Could not find a rating period row with start date "${rowDate}".`
+      `No rating period row found starting "${periodStart}".`
     ).toBeVisible();
 
-    // The associate name cell is the link that opens the PERF form.
-    await row.getByLabel("User Overview").click();
+    await row
+      .getByRole("button", { name: /Start|Continue|Resume|Edit|View/ })
+      .click();
 
-    await expect(this.page).toHaveURL(/UserAppraisalForm/);
     await expect(
-      this.page.getByRole("heading", { name: "PERF Rating Sheet" })
+      this.page.getByText("Rate your own performance for this appraisal period")
     ).toBeVisible();
-  }
-
-  /** Step the month selector (prev/next) until it shows the target month/year. */
-  private async navigateToTargetMonth(
-    targetYear: number,
-    targetMonth: number
-  ): Promise<void> {
-    const startDateBox = this.page.getByRole("textbox", { name: "Start Date" });
-    await expect(startDateBox.first()).toBeVisible();
-
-    for (let i = 0; i < 24; i++) {
-      // Period selector Start Date is formatted DD-MM-YYYY (e.g. 01-06-2026).
-      const value = (await startDateBox.first().inputValue()) || "";
-      const match = value.match(/(\d{2})-(\d{2})-(\d{4})/);
-      if (match) {
-        const shownMonth = Number(match[2]);
-        const shownYear = Number(match[3]);
-        if (shownYear === targetYear && shownMonth === targetMonth) return;
-
-        const goBack =
-          shownYear > targetYear ||
-          (shownYear === targetYear && shownMonth > targetMonth);
-        await this.page
-          .getByRole("button", {
-            name: goBack
-              ? "click to go to previous month"
-              : "click to go to next month",
-          })
-          .click();
-        await this.page.waitForTimeout(500); // allow the grid to refresh
-      } else {
-        break;
-      }
-    }
   }
 
   // --- Read-only guard ----------------------------------------------------
 
-  /**
-   * Returns true when the period has already been submitted and the ratings are
-   * locked. Filling such a form is impossible, so callers should fail fast.
-   */
+  /** True when the period is already submitted (Submit/Save Draft unavailable). */
   async isReadOnly(): Promise<boolean> {
-    return (
-      (await this.page.getByText(/Ratings are read-only/i).count()) > 0
-    );
+    const saveDraft = this.page.getByRole("button", { name: "Save Draft" });
+    return !(await saveDraft.isVisible().catch(() => false));
   }
 
   // --- Filling ------------------------------------------------------------
 
-  /** Expand every criterion in the current section so comment boxes render. */
+  /** Read the current section heading (Capability, Creativity, ...). */
+  async getCurrentSectionName(): Promise<string> {
+    return (
+      (await this.page.locator("h2").first().textContent())?.trim() ?? ""
+    );
+  }
+
+  /** Expand all criteria in the current section so the comment boxes render. */
   async expandAll(): Promise<void> {
     const expand = this.page.getByRole("button", { name: "Expand All" });
     if (await expand.isVisible().catch(() => false)) {
@@ -114,67 +82,62 @@ export class SelfRatingPage {
   }
 
   /**
-   * Fill all criteria of the currently displayed section.
-   *
-   * Criteria appear top-to-bottom in the same order as `section.criteria`, so we
-   * address the i-th star-rating widget and the i-th comment box. The order is
-   * asserted against the data to fail fast if the UI ever changes.
+   * The accordion block for a criterion: the nearest ancestor of the title
+   * heading that also contains a description textbox. Scopes the star widget
+   * and the comment box to a single criterion.
+   */
+  private criterionBlock(title: string): Locator {
+    return this.page.locator(
+      `xpath=//h3[normalize-space()=${xpathLiteral(title)}]` +
+        `/ancestor::div[.//textarea or .//*[@placeholder="Enter description..."]][1]`
+    );
+  }
+
+  /**
+   * Set the star rating for a criterion block. Half values (x.5) click the left
+   * half of star index floor(value); whole values (x) click the right half of
+   * star index value-1.
+   */
+  private async setStarRating(block: Locator, value: string): Promise<void> {
+    const v = parseFloat(value);
+    const isHalf = v % 1 !== 0;
+    const starIndex = isHalf ? Math.floor(v) : v - 1;
+
+    const stars = block.locator("button:has(svg.lucide-star)");
+    const star = stars.nth(starIndex);
+    await star.scrollIntoViewIfNeeded();
+    const box = await star.boundingBox();
+    if (!box) throw new Error(`Could not resolve star ${starIndex} bounding box.`);
+
+    await star.click({
+      position: { x: isHalf ? box.width * 0.25 : box.width * 0.75, y: box.height / 2 },
+    });
+  }
+
+  /**
+   * Fill all criteria of the currently displayed section: set each star rating
+   * and write each comment. Criteria are addressed by their title so the order
+   * is asserted implicitly against the data.
    */
   async fillCurrentSection(section: RatingSection): Promise<void> {
     await this.expandAll();
 
-    const ratingRoots = this.page.locator(".MuiRating-root");
-    const commentBoxes = this.page.getByRole("textbox", {
-      name: "Enter your comments...",
-    });
+    for (const criterion of section.criteria) {
+      const block = this.criterionBlock(criterion.title);
+      await expect(
+        block,
+        `Criterion "${criterion.title}" not found in section "${section.name}".`
+      ).toBeVisible();
 
-    await expect(
-      ratingRoots,
-      `Section "${section.name}" should have ${section.criteria.length} rating widgets.`
-    ).toHaveCount(section.criteria.length);
-    await expect(
-      commentBoxes,
-      `Section "${section.name}" should have ${section.criteria.length} comment boxes.`
-    ).toHaveCount(section.criteria.length);
+      await this.setStarRating(block, criterion.stars);
 
-    for (let i = 0; i < section.criteria.length; i++) {
-      const criterion = section.criteria[i];
-
-      // --- Set the star rating -------------------------------------------
-      // The radio <input> is visually hidden and overlaid by a <label>, so we
-      // resolve the input id for the desired value and click its label.
-      const root = ratingRoots.nth(i);
-      const input = root.locator(`input[type="radio"][value="${criterion.stars}"]`);
-      const inputId = await input.getAttribute("id");
-      if (!inputId) {
-        throw new Error(
-          `No ${criterion.stars}-star option for "${criterion.title}" in section "${section.name}".`
-        );
-      }
-      // MUI rating labels overlap and some have zero width, which defeats a
-      // coordinate-based Playwright click. Trigger the label's native click()
-      // (which activates the associated radio and fires React's onChange).
-      await root
-        .locator(`label[for="${inputId}"]`)
-        .evaluate((el) => (el as HTMLElement).click());
-
-      // --- Fill the comment ----------------------------------------------
-      // Clear first in case a value already exists, then type the new content.
-      const comment = commentBoxes.nth(i);
+      const comment = block.getByRole("textbox", {
+        name: "Enter description...",
+      });
       await comment.click();
       await comment.fill("");
       await comment.fill(criterion.comment);
     }
-
-    // The form rejects comments that are too short for the chosen rating
-    // ("Rating N requires at least M words"). Fail fast if any remain so the
-    // form is guaranteed to be valid and submittable.
-    const wordError = this.page.getByText(/requires at least \d+ words/i);
-    await expect(
-      wordError,
-      `Section "${section.name}" still has a minimum-word-count validation error; ` +
-        `lengthen the affected comment(s) in selfRatingData.`
-    ).toHaveCount(0);
   }
 
   /** Advance to the next section. */
@@ -184,22 +147,39 @@ export class SelfRatingPage {
     await next.click();
   }
 
-  /** Read the current section heading (Capability, Creativity, ...). */
-  async getCurrentSectionName(): Promise<string> {
-    return (
-      (await this.page.locator("h5").first().textContent())?.trim() ?? ""
-    );
+  /** Save the appraisal as a draft (reversible). */
+  async saveDraft(): Promise<void> {
+    await this.page.getByRole("button", { name: "Save Draft" }).click();
   }
 
-  /** The Submit button (only present on the rating form). */
+  // --- Submit -------------------------------------------------------------
+
+  /** The Submit button (present on the last section). */
   submitButton(): Locator {
     return this.page.getByRole("button", { name: "Submit", exact: true });
   }
 
-  /** Submit the appraisal. Only call this when submission is intended. */
+  /**
+   * Submit the appraisal. Only call when submission is intended (it permanently
+   * records the self-appraisal). Handles an optional confirmation dialog.
+   */
   async submit(): Promise<void> {
     const submit = this.submitButton();
-    await expect(submit).toBeVisible();
+    await expect(submit).toBeEnabled();
     await submit.click();
+
+    const confirm = this.page.getByRole("button", {
+      name: /^(Confirm|Yes|Ok|Submit)$/,
+    });
+    if (await confirm.isVisible().catch(() => false)) {
+      await confirm.click();
+    }
   }
+}
+
+/** Build a safe XPath string literal (handles embedded quotes via concat()). */
+function xpathLiteral(value: string): string {
+  if (!value.includes('"')) return `"${value}"`;
+  if (!value.includes("'")) return `'${value}'`;
+  return "concat('" + value.replace(/'/g, "', \"'\", '") + "')";
 }

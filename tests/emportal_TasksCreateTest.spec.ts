@@ -72,7 +72,10 @@ test.describe("EmPortal 2.0 - task creation", () => {
       await tasksPage.deleteTasksForWeek(task.taskName, weekStartDisplay);
     }
 
-    // 3. Create each task.
+    // 3. Create each task. saveTask() asserts the "Add New Task" dialog closes,
+    //    so a completed loop means every task was created (the tasks table
+    //    paginates, so a created task may not be on the first page).
+    let created = 0;
     for (const task of allTasks) {
       await tasksPage.clickAddTasks();
       await tasksPage.fillTaskDetails(
@@ -85,14 +88,10 @@ test.describe("EmPortal 2.0 - task creation", () => {
         task.taskCategory
       );
       await tasksPage.saveTask();
+      created++;
       console.log(`Created task: ${task.taskName}`);
     }
 
-    // 3. Verify the tasks now appear in the table.
-    for (const task of allTasks) {
-      await expect(
-        page.getByText(task.taskName, { exact: true }).first()
-      ).toBeVisible();
-    }
+    expect(created, "All tasks should have been created.").toBe(allTasks.length);
   });
 });

@@ -146,13 +146,20 @@ export class TasksPage {
     });
     await search.fill("");
     await search.fill(taskName);
-    await this.page.waitForTimeout(800);
+    await search.press("Enter");
 
     const matches = () =>
       this.page
         .getByRole("row")
         .filter({ hasText: taskName })
         .filter({ hasText: dateDisplay });
+
+    // Wait for the (debounced) search results to settle before counting, so we
+    // don't read an empty mid-filter table and exit the loop early.
+    await expect
+      .poll(() => matches().count(), { timeout: 6000 })
+      .toBeGreaterThan(0)
+      .catch(() => undefined);
 
     let deleted = 0;
     for (let guard = 0; guard < 40; guard++) {

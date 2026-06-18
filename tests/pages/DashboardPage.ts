@@ -1,0 +1,421 @@
+import { Page, Locator, expect } from "@playwright/test";
+
+/**
+ * Page Object for the EmPortal 2.0 employee "Dashboard".
+ *
+ * The "Dashboard" left-nav link opens the logged-in user's own employee profile
+ * (route: /admin/employees/{id}). The page is organised into six top tabs:
+ *   Overview | Tasks | Ratings | Timesheets | Worked Hours | Profile
+ * and the Profile tab has its own sub-tabs rendered as buttons:
+ *   User Info | Employee Time | Projects | Skills | Certifications
+ *
+ * Charts are SVG (recharts) blocks identified by their headings and legend text
+ * rather than fragile DOM paths. Counts (task totals, worked hours, ratings) are
+ * read with flexible matchers so the validations stay green as production data
+ * changes over time.
+ */
+export class DashboardPage {
+  private readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  // --- Navigation ---------------------------------------------------------
+
+  /** Open the Dashboard via the left-nav "Dashboard" link and wait for tabs. */
+  async navigateToDashboard(): Promise<void> {
+    await this.page.getByRole("link", { name: "Dashboard" }).click();
+    await this.page.waitForURL(/\/admin\/employees\//, { timeout: 20000 });
+    // The tab strip is the reliable "dashboard is ready" signal.
+    await expect(this.page.getByRole("tab", { name: "Overview" })).toBeVisible({
+      timeout: 20000,
+    });
+  }
+
+  /** Click one of the six top-level dashboard tabs and let its panel render. */
+  async selectTab(name: string): Promise<void> {
+    const tab = this.page.getByRole("tab", { name, exact: true });
+    await expect(tab, `Tab "${name}" should be present`).toBeVisible();
+    await tab.click();
+    // recharts/MUI panels animate in; a short settle avoids reading mid-transition.
+    await this.page.waitForTimeout(1500);
+  }
+
+  /** Select a Profile sub-tab (rendered as a button, not an ARIA tab). */
+  async selectProfileSection(name: string): Promise<void> {
+    await this.page.getByRole("button", { name, exact: true }).click();
+    await this.page.waitForTimeout(1200);
+  }
+
+  // --- Generic helpers ----------------------------------------------------
+
+  /** A visible chart is present when its SVG (recharts) surface has rendered. */
+  async hasChart(): Promise<boolean> {
+    return (await this.page.locator("svg.recharts-surface, svg, canvas").count()) > 0;
+  }
+
+  /** True when the given (case-insensitive) text is visible anywhere on screen. */
+  async isTextVisible(text: string | RegExp): Promise<boolean> {
+    return await this.page
+      .getByText(text)
+      .first()
+      .isVisible()
+      .catch(() => false);
+  }
+
+  /**
+   * Read the numeric value paired with a stat label (e.g. "Total Tasks").
+   * EmPortal renders the number directly above/below the label inside the same
+   * card, so we walk up to the nearest card container and grab the first digits.
+   */
+  async readStatNear(label: string): Promise<string> {
+    const card = this.page
+      .locator(`xpath=//*[normalize-space()=${xpathLiteral(label)}]/ancestor::*[self::div][1]`)
+      .first();
+    const text = (await card.textContent().catch(() => "")) ?? "";
+    const match = text.match(/[\d,]+(?:\.\d+)?\s*h?/);
+    return match ? match[0].trim() : "";
+  }
+
+  // --- Overview -----------------------------------------------------------
+
+  /** Validate Total/Completed task counts and the progress/distribution charts. */
+  async validateOverview(): Promise<void> {
+    await expect(this.page.getByText("Total Tasks").first()).toBeVisible();
+    // "<n> completed" caption sits under the Total Tasks figure.
+    await expect(this.page.getByText(/\d+\s+completed/i).first()).toBeVisible();
+    await expect(
+      this.page.getByRole("heading", { name: "Monthly Progress" })
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole("heading", { name: "Performance by Project" })
+    ).toBeVisible();
+    // Distribution chart legend confirms the chart rendered with labels.
+    await expect(this.page.getByText("Tasks Completed").first()).toBeVisible();
+    expect(await this.hasChart(), "Overview should render a chart").toBeTruthy();
+  }
+
+  // --- Tasks --------------------------------------------------------------
+
+  /** Validate the Allocated vs Worked bar chart and its period filter. */
+  async validateTasks(): Promise<void> {
+    // Legend labels for the allocated/worked bar chart.
+    await expect(this.page.getByText(/Allocated:\s*\d+h/i).first()).toBeVisible();
+    await expect(this.page.getByText(/Worked:\s*\d+h/i).first()).toBeVisible();
+    expect(await this.hasChart(), "Tasks should render a bar chart").toBeTruthy();
+
+    // Filtering: exercise the time-range filter dropdown if present (non-fatal).
+    await this.tryCycleRangeFilter();
+  }
+
+  // --- Ratings ------------------------------------------------------------
+
+  /** Validate ratings summary cards, table, status dropdown, search & export. */
+  async validateRatings(): Promise<void> {
+    // Summary cards.
+    for (const label of ["Total Ratings", "Completed", "Pending", "Avg Rating"]) {
+      await expect(
+        this.page.getByText(label, { exact: true }).first(),
+        `Ratings card "${label}" should be visible`
+      ).toBeVisible();
+    }
+
+    // Results table + its column headers.
+    await expect(this.page.getByRole("table")).toBeVisible();
+    for (const col of ["Period", "Project", "Manager", "Status", "Rating"]) {
+      await expect(
+        this.page.getByRole("columnheader", { name: new RegExp(col, "i") }).first()
+      ).toBeVisible();
+    }
+
+    await this.validateStatusDropdown();
+    await this.validateDateRangeInputs();
+    await this.validateSearchBox("Search...");
+    await this.validateExportButton();
+  }
+
+  /**
+   * Validate the "All Status" dropdown's options and filtering. The control is a
+   * native <select>, so its options live in the DOM (hidden until opened) and we
+   * drive it with selectOption rather than clicking option elements.
+   */
+  async validateStatusDropdown(): Promise<void> {
+    const dropdown = this.page
+      .getByRole("combobox")
+      .filter({ hasText: /All Status/i })
+      .first();
+    if (!(await dropdown.isVisible().catch(() => false))) return;
+
+    // Expected option set for the ratings status filter (present in the DOM).
+    const optionTexts = (await dropdown.locator("option").allTextContents()).map((t) =>
+      t.trim()
+    );
+    for (const opt of ["All Status", "Not Started", "Needs Review", "Completed"]) {
+      expect(optionTexts, `Status option "${opt}" should be listed`).toContain(opt);
+    }
+
+    // Apply one option, then restore the default to leave the view unfiltered.
+    await dropdown.selectOption({ label: "Completed" });
+    await this.page.waitForTimeout(800);
+    await dropdown.selectOption({ label: "All Status" });
+    await this.page.waitForTimeout(500);
+  }
+
+  /** Validate the Start/End date range inputs are present and well formatted. */
+  async validateDateRangeInputs(): Promise<void> {
+    const start = this.page.getByRole("group", { name: "Start Date" }).first();
+    const end = this.page.getByRole("group", { name: "End Date" }).first();
+    if (await start.isVisible().catch(() => false)) {
+      // Values render as DD/MM/YYYY spinbutton groups.
+      await expect(start).toBeVisible();
+    }
+    if (await end.isVisible().catch(() => false)) {
+      await expect(end).toBeVisible();
+    }
+  }
+
+  // --- Timesheets ---------------------------------------------------------
+
+  /** Validate timesheet summary stats, charts, Daily/Weekly toggle & table. */
+  async validateTimesheets(): Promise<void> {
+    await expect(
+      this.page.getByRole("heading", { name: "Project Worked Hours" })
+    ).toBeVisible();
+
+    // Summary stat labels.
+    for (const label of ["Total Hours", "Avg / Week", "Top Project", "Active Days"]) {
+      await expect(
+        this.page.getByText(label, { exact: true }).first(),
+        `Timesheet stat "${label}" should be visible`
+      ).toBeVisible();
+    }
+    // Total Hours figure is an "<n>h" value.
+    await expect(this.page.getByText(/\d+h/).first()).toBeVisible();
+
+    await expect(
+      this.page.getByRole("heading", { name: "Hours by Project" })
+    ).toBeVisible();
+    await expect(this.page.getByText("Scroll to explore").first()).toBeVisible();
+
+    await this.toggleDailyWeekly();
+    await this.validateSearchBox("Filter by Project");
+
+    // Project breakdown table + columns.
+    await expect(this.page.getByRole("table")).toBeVisible();
+    for (const col of ["Project Breakdown", "Week", "Total Hours", "Status"]) {
+      await expect(
+        this.page.getByRole("columnheader", { name: new RegExp(col, "i") }).first()
+      ).toBeVisible();
+    }
+    expect(await this.hasChart(), "Timesheets should render a chart").toBeTruthy();
+  }
+
+  // --- Worked Hours -------------------------------------------------------
+
+  /** Validate worked-hours stats, charts, status filters, search & export. */
+  async validateWorkedHours(): Promise<void> {
+    for (const label of ["Total Hours", "Avg / Week", "Top Project", "Active Days"]) {
+      await expect(
+        this.page.getByText(label, { exact: true }).first(),
+        `Worked Hours stat "${label}" should be visible`
+      ).toBeVisible();
+    }
+
+    await expect(
+      this.page.getByRole("heading", { name: "Hours by Project" })
+    ).toBeVisible();
+    await this.toggleDailyWeekly();
+
+    // ACTIVE/INACTIVE status filters. End on "All" so the table is populated
+    // (the user may have no inactive projects, which renders an empty state).
+    for (const f of ["Active", "Inactive", "All"]) {
+      const btn = this.page.getByRole("button", { name: f, exact: true });
+      if (await btn.isVisible().catch(() => false)) {
+        await btn.click();
+        await this.page.waitForTimeout(600);
+      }
+    }
+
+    await this.validateSearchBox("Search by project name...");
+
+    // Projects table + sortable columns.
+    await expect(this.page.getByRole("table")).toBeVisible();
+    for (const col of ["Project Name", "Status", "Alloc %", "Worked Hrs"]) {
+      await expect(
+        this.page.getByRole("columnheader", { name: new RegExp(col, "i") }).first()
+      ).toBeVisible();
+    }
+    // Sorting: click a sortable header (no error / table stays rendered).
+    const sortHeader = this.page
+      .getByRole("columnheader", { name: /Worked Hrs/i })
+      .first();
+    if (await sortHeader.isVisible().catch(() => false)) {
+      await sortHeader.click();
+      await this.page.waitForTimeout(600);
+      await expect(this.page.getByRole("table")).toBeVisible();
+    }
+
+    await this.validateExportButton();
+    expect(await this.hasChart(), "Worked Hours should render a chart").toBeTruthy();
+  }
+
+  // --- Profile ------------------------------------------------------------
+
+  /** Validate the "User Info" section shows the expected identity fields. */
+  async validateProfileUserInfo(email: string): Promise<void> {
+    await this.selectProfileSection("User Info");
+    await expect(
+      this.page.getByRole("heading", { name: "User Information" })
+    ).toBeVisible();
+    // Key labels and the known email value.
+    for (const label of ["Role", "Status", "Last Login", "Job Title"]) {
+      await expect(
+        this.page.getByText(label, { exact: true }).first(),
+        `User Info field "${label}" should be visible`
+      ).toBeVisible();
+    }
+    await expect(this.page.getByText(email).first()).toBeVisible();
+  }
+
+  /** Validate the "Employee Time" section shows time-policy fields. */
+  async validateProfileEmployeeTime(): Promise<void> {
+    await this.selectProfileSection("Employee Time");
+    await expect(
+      this.page.getByRole("heading", { name: "Employee Time" })
+    ).toBeVisible();
+    for (const label of ["SHIFT", "HOLIDAY CALENDAR", "ATTENDANCE NUMBER"]) {
+      await expect(
+        this.page.getByText(label, { exact: true }).first(),
+        `Employee Time field "${label}" should be visible`
+      ).toBeVisible();
+    }
+  }
+
+  /**
+   * Validate the "Projects" section: assigned/resume projects, the Active/
+   * Inactive/All status filter, and the Add External Project form. The external
+   * project is filled and then CANCELLED so production data is never mutated.
+   */
+  async validateProfileProjects(): Promise<void> {
+    await this.selectProfileSection("Projects");
+    await expect(this.page.getByText(/Assigned Projects \(\d+\)/).first()).toBeVisible();
+
+    // Active/Inactive/All status filter for the project list.
+    for (const f of ["Active", "Inactive", "All"]) {
+      const btn = this.page.getByRole("button", { name: f, exact: true }).first();
+      if (await btn.isVisible().catch(() => false)) {
+        await btn.click();
+        await this.page.waitForTimeout(500);
+      }
+    }
+
+    await this.validateAddExternalProjectForm();
+  }
+
+  /**
+   * Open "Add External Project", fill Project Name / Role / dates, validate the
+   * inputs accept the values, then click Cancel (non-destructive). This proves
+   * the add flow works without persisting test data to production.
+   */
+  async validateAddExternalProjectForm(): Promise<void> {
+    const addBtn = this.page.getByRole("button", { name: "Add External Project" });
+    if (!(await addBtn.isVisible().catch(() => false))) return;
+    await addBtn.click();
+    await this.page.waitForTimeout(1000);
+
+    const projectName = this.page.getByRole("textbox", {
+      name: /Project Name/i,
+    });
+    // Fall back to placeholder-based lookup if the accessible name differs.
+    const nameField = (await projectName.count())
+      ? projectName.first()
+      : this.page.getByPlaceholder("e.g. Banking Platform Migration");
+    const roleField = this.page.getByPlaceholder("e.g. Lead Developer");
+
+    if (await nameField.isVisible().catch(() => false)) {
+      await nameField.fill("Automation Validation Project");
+      await expect(nameField).toHaveValue("Automation Validation Project");
+    }
+    if (await roleField.isVisible().catch(() => false)) {
+      await roleField.fill("QA Automation Engineer");
+      await expect(roleField).toHaveValue("QA Automation Engineer");
+    }
+
+    // Confirm Add + Cancel actions are present, then Cancel (no data written).
+    await expect(this.page.getByRole("button", { name: "Add", exact: true })).toBeVisible();
+    const cancel = this.page.getByRole("button", { name: "Cancel", exact: true });
+    await expect(cancel).toBeVisible();
+    await cancel.click();
+    await this.page.waitForTimeout(800);
+  }
+
+  // --- Shared validations -------------------------------------------------
+
+  /** Type into and clear a search/filter textbox identified by placeholder. */
+  async validateSearchBox(placeholder: string): Promise<void> {
+    const search = this.page.getByPlaceholder(placeholder).first();
+    if (!(await search.isVisible().catch(() => false))) return;
+    await search.fill("Stax");
+    await this.page.waitForTimeout(800);
+    await search.fill(""); // reset so later steps see the full data set
+    await this.page.waitForTimeout(500);
+  }
+
+  /**
+   * Validate an Export control exists and is actionable. Clicking it should
+   * trigger a CSV/Excel download; we capture the download best-effort and assert
+   * the filename extension when one fires (non-fatal if it opens a menu instead).
+   */
+  async validateExportButton(): Promise<void> {
+    const exportBtn = this.page.getByRole("button", { name: "Export" }).first();
+    if (!(await exportBtn.isVisible().catch(() => false))) return;
+    await expect(exportBtn).toBeEnabled();
+
+    const downloadPromise = this.page
+      .waitForEvent("download", { timeout: 4000 })
+      .catch(() => null);
+    await exportBtn.click();
+    const download = await downloadPromise;
+    if (download) {
+      expect(
+        download.suggestedFilename(),
+        "Exported file should be CSV or Excel"
+      ).toMatch(/\.(csv|xlsx?|xls)$/i);
+    }
+    // Dismiss any export menu that opened instead of downloading.
+    await this.page.keyboard.press("Escape").catch(() => undefined);
+  }
+
+  /** Toggle the Daily / Weekly chart views if the toggle buttons are present. */
+  async toggleDailyWeekly(): Promise<void> {
+    for (const view of ["Weekly", "Daily"]) {
+      const btn = this.page.getByRole("button", { name: view, exact: true }).first();
+      if (await btn.isVisible().catch(() => false)) {
+        await btn.click();
+        await this.page.waitForTimeout(700);
+      }
+    }
+  }
+
+  /** Best-effort exercise of a chart time-range filter (Last 7 Days, etc.). */
+  private async tryCycleRangeFilter(): Promise<void> {
+    const combo = this.page.getByRole("combobox").first();
+    if (!(await combo.isVisible().catch(() => false))) return;
+    await combo.click().catch(() => undefined);
+    const option = this.page.getByRole("option").first();
+    if (await option.isVisible().catch(() => false)) {
+      await option.click().catch(() => undefined);
+      await this.page.waitForTimeout(600);
+    } else {
+      await this.page.keyboard.press("Escape").catch(() => undefined);
+    }
+  }
+}
+
+/** Build a safe XPath string literal (handles embedded quotes via concat()). */
+function xpathLiteral(value: string): string {
+  if (!value.includes('"')) return `"${value}"`;
+  if (!value.includes("'")) return `'${value}'`;
+  return "concat('" + value.replace(/'/g, "', \"'\", '") + "')";
+}

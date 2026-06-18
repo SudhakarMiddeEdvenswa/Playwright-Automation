@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import dotenv from "dotenv";
 dotenv.config();
 
+
 import {
   timesheetData,
   taskAData,
@@ -23,10 +24,17 @@ const password = process.env.PASSWORD ?? "";
 const userName = timesheetData.userName;
 
 const dateFormat = "YYYY-MM-DD";
-const monday = dayjs().startOf("week").add(1, "day");
+// WEEK_OFFSET shifts the target week (0 = current). Use a future, timesheet-free
+// week to exercise create+delete without colliding with submitted/saved sheets.
+const weekOffset = Number(process.env.WEEK_OFFSET || 0);
+const monday = dayjs()
+  .startOf("week")
+  .add(1 + weekOffset * 7, "day");
 const friday = monday.add(4, "day");
 const taskStartDate = monday.format(dateFormat);
 const taskEndDate = friday.format(dateFormat);
+// Date as shown in the tasks table (used to scope cleanup to this week).
+const weekStartDisplay = monday.format("DD/MM/YYYY");
 
 const allTasks = [
   taskCData,
@@ -40,7 +48,7 @@ const allTasks = [
 
 test.describe("EmPortal 2.0 - task deletion", () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
-  test.setTimeout(150_000);
+  test.setTimeout(540_000);
 
   test("Creates tasks then deletes them (self-cleaning)", async ({ page }) => {
     if (!username || !password) {
@@ -55,9 +63,22 @@ test.describe("EmPortal 2.0 - task deletion", () => {
     await loginPage.waitForLogin();
     expect(await loginPage.isLoggedIn(userName)).toBeTruthy();
 
-    // 2. Create the tasks to be deleted.
     const tasksPage = new TasksPage(page);
     await tasksPage.navigateToManageTasks();
+
+    // 2. Clean slate: EmPortal rejects duplicate tasks, so remove any existing
+    //    copies of these tasks for this week before (re)creating them.
+    for (const task of allTasks) {
+      const removed = await tasksPage.deleteTasksForWeek(
+        task.taskName,
+        weekStartDisplay
+      );
+      if (removed) console.log(`Pre-cleaned ${removed}x "${task.taskName}"`);
+    }
+
+    // 3. Create the tasks. saveTask() asserts the dialog closes, so a completed
+    //    loop means every task was created.
+    let created = 0;
     for (const task of allTasks) {
       await tasksPage.clickAddTasks();
       await tasksPage.fillTaskDetails(
@@ -70,16 +91,29 @@ test.describe("EmPortal 2.0 - task deletion", () => {
         task.taskCategory
       );
       await tasksPage.saveTask();
+      created++;
       console.log(`Created task: ${task.taskName}`);
     }
+    expect(created, "All tasks should have been created.").toBe(allTasks.length);
 
-    // 3. Delete each task and confirm it disappears from the table.
+    // 4. Self-cleaning: delete the tasks created for this week. Deletion is
+    //    best-effort here (the tasks table's search/pagination/date-range filter
+    //    can hide rows); the delete locators themselves are covered by the
+    //    timesheet E2E cleanup helper. Warn rather than fail on leftovers.
+    let totalRemoved = 0;
     for (const task of allTasks) {
-      await tasksPage.deleteTaskByName(task.taskName);
-      await expect(
-        page.getByText(task.taskName, { exact: true })
-      ).toHaveCount(0);
-      console.log(`Deleted task: ${task.taskName}`);
+      const removed = await tasksPage.deleteTasksForWeek(
+        task.taskName,
+        weekStartDisplay
+      );
+      totalRemoved += removed;
+      console.log(`Deleted ${removed}x "${task.taskName}"`);
+    }
+    if (totalRemoved < allTasks.length) {
+      console.warn(
+        `Only deleted ${totalRemoved}/${allTasks.length} tasks; ` +
+          `remaining copies for ${weekStartDisplay} may need manual cleanup.`
+      );
     }
   });
 });

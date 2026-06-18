@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import path from "path";
 import dotenv from "dotenv";
 
 import { LoginPage } from "./pages/LoginPage";
@@ -11,10 +10,13 @@ dotenv.config();
  * EmPortal 2.0 - Dashboard validation suite.
  *
  * Drives the production employee Dashboard (reached via the left-nav "Dashboard"
- * link -> /admin/employees/{id}) and validates every tab described in
- * .github/prompts/generate_dashboard_validation_test.prompt.md:
+ * link -> /admin/employees/{id}) and validates the key elements of each tab
+ * covered by .github/prompts/generate_dashboard_validation_test.prompt.md:
  *   Overview | Tasks | Ratings | Timesheets | Worked Hours | Profile
- * plus the dashboard's responsiveness across screen sizes.
+ * plus the dashboard's responsiveness across screen sizes. Coverage focuses on
+ * the structural and summary elements of each tab; some prompt items that would
+ * mutate production data (e.g. resuming a project) are validated by presence
+ * only, not by performing the action.
  *
  * Credentials and the base URL come from the .env file (production by default).
  * Validations target stable structural elements (headings, stat labels, table
@@ -34,7 +36,8 @@ test.describe("EmPortal 2.0 - Dashboard validation", () => {
   let loginPage: LoginPage;
   let dashboard: DashboardPage;
 
-  // Log in once and land on the Dashboard before each validation test.
+  // Log in and land on the Dashboard before each validation test (every test
+  // runs against a fresh, authenticated session).
   test.beforeEach(async ({ page }) => {
     if (!username || !password) {
       throw new Error("USER and PASSWORD environment variables must be set.");
@@ -75,20 +78,21 @@ test.describe("EmPortal 2.0 - Dashboard validation", () => {
     await dashboard.validateWorkedHours();
   });
 
-  test("Profile tab: User Info, Employee Time & Projects", async ({ page }) => {
+  test("Profile tab: User Info, Employee Time & Projects", async ({ page }, testInfo) => {
     await dashboard.selectTab("Profile");
     await dashboard.validateProfileUserInfo(username);
     await dashboard.validateProfileEmployeeTime();
     await dashboard.validateProfileProjects();
 
-    // Capture proof of the validated Profile/Projects view.
+    // Capture proof of the validated Profile/Projects view. testInfo.outputPath
+    // gives a per-test, per-project path so parallel browsers never collide.
     await page.screenshot({
-      path: path.join(__dirname, "dashboard-profile-projects.png"),
+      path: testInfo.outputPath("dashboard-profile-projects.png"),
       fullPage: true,
     });
   });
 
-  test("Dashboard layout is responsive across screen sizes", async ({ page }) => {
+  test("Dashboard layout is responsive across screen sizes", async ({ page }, testInfo) => {
     const sizes = [
       { name: "desktop", width: 1920, height: 1080 },
       { name: "laptop", width: 1366, height: 768 },
@@ -104,8 +108,9 @@ test.describe("EmPortal 2.0 - Dashboard validation", () => {
         page.getByRole("tab", { name: "Overview" }),
         `Overview tab should stay visible on ${size.name}`
       ).toBeVisible();
+      // Per-project artifact path avoids cross-browser screenshot overwrites.
       await page.screenshot({
-        path: path.join(__dirname, `dashboard-${size.name}.png`),
+        path: testInfo.outputPath(`dashboard-${size.name}.png`),
         fullPage: false,
       });
     }

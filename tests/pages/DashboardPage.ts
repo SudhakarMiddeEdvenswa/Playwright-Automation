@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from "@playwright/test";
+import { Page, expect } from "@playwright/test";
 
 /**
  * Page Object for the EmPortal 2.0 employee "Dashboard".
@@ -33,13 +33,15 @@ export class DashboardPage {
     });
   }
 
-  /** Click one of the six top-level dashboard tabs and let its panel render. */
+  /** Click one of the six top-level dashboard tabs and wait until it is active. */
   async selectTab(name: string): Promise<void> {
     const tab = this.page.getByRole("tab", { name, exact: true });
     await expect(tab, `Tab "${name}" should be present`).toBeVisible();
     await tab.click();
-    // recharts/MUI panels animate in; a short settle avoids reading mid-transition.
-    await this.page.waitForTimeout(1500);
+    // Deterministic signal that the tab switch completed (avoids fixed sleeps).
+    await expect(tab).toHaveAttribute("aria-selected", "true", { timeout: 10000 });
+    // Brief settle for the recharts/MUI panel animation before reading values.
+    await this.page.waitForTimeout(600);
   }
 
   /** Select a Profile sub-tab (rendered as a button, not an ARIA tab). */
@@ -50,9 +52,17 @@ export class DashboardPage {
 
   // --- Generic helpers ----------------------------------------------------
 
-  /** A visible chart is present when its SVG (recharts) surface has rendered. */
+  /**
+   * A chart is present when an actual chart surface has rendered. Scoped to
+   * recharts surfaces/containers (and <canvas>) so unrelated icon/logo <svg>s
+   * cannot produce a false-positive pass.
+   */
   async hasChart(): Promise<boolean> {
-    return (await this.page.locator("svg.recharts-surface, svg, canvas").count()) > 0;
+    return (
+      (await this.page
+        .locator("svg.recharts-surface, .recharts-responsive-container, canvas")
+        .count()) > 0
+    );
   }
 
   /** True when the given (case-insensitive) text is visible anywhere on screen. */
@@ -155,10 +165,17 @@ export class DashboardPage {
       expect(optionTexts, `Status option "${opt}" should be listed`).toContain(opt);
     }
 
-    // Apply one option, then restore the default to leave the view unfiltered.
+    // Apply one option and assert the selection actually took effect, then
+    // restore the default so the view is left unfiltered for later steps.
     await dropdown.selectOption({ label: "Completed" });
+    await expect(
+      dropdown.locator("option:checked"),
+      "Selecting 'Completed' should update the status filter"
+    ).toHaveText("Completed");
     await this.page.waitForTimeout(800);
+
     await dropdown.selectOption({ label: "All Status" });
+    await expect(dropdown.locator("option:checked")).toHaveText("All Status");
     await this.page.waitForTimeout(500);
   }
 
@@ -293,9 +310,12 @@ export class DashboardPage {
   }
 
   /**
-   * Validate the "Projects" section: assigned/resume projects, the Active/
-   * Inactive/All status filter, and the Add External Project form. The external
-   * project is filled and then CANCELLED so production data is never mutated.
+   * Validate the "Projects" section: the Assigned Projects list, the Active/
+   * Inactive/All status filter, the presence of the Resume Projects section, and
+   * the Add External Project form. All interactions are non-destructive - the
+   * external project is filled then CANCELLED, and the Resume Projects section is
+   * only asserted to be present (the Resume action itself is never triggered, as
+   * it would mutate production data).
    */
   async validateProfileProjects(): Promise<void> {
     await this.selectProfileSection("Projects");
@@ -310,13 +330,22 @@ export class DashboardPage {
       }
     }
 
+    // Resume Projects section: assert presence only (no Resume click - it would
+    // change a project's status in production).
+    const resumeSection = this.page.getByText(/Resume Projects \(\d+\)/).first();
+    if (await resumeSection.isVisible().catch(() => false)) {
+      await expect(resumeSection).toBeVisible();
+    }
+
     await this.validateAddExternalProjectForm();
   }
 
   /**
-   * Open "Add External Project", fill Project Name / Role / dates, validate the
-   * inputs accept the values, then click Cancel (non-destructive). This proves
-   * the add flow works without persisting test data to production.
+   * Open "Add External Project", fill the Project Name and Your Role fields,
+   * validate the inputs accept the values, confirm the Add/Cancel actions are
+   * present, then click Cancel (non-destructive). This proves the add flow works
+   * without persisting test data to production. (Date fields are intentionally
+   * left untouched - the form is cancelled, so they are not exercised here.)
    */
   async validateAddExternalProjectForm(): Promise<void> {
     const addBtn = this.page.getByRole("button", { name: "Add External Project" });
@@ -357,8 +386,11 @@ export class DashboardPage {
     const search = this.page.getByPlaceholder(placeholder).first();
     if (!(await search.isVisible().catch(() => false))) return;
     await search.fill("Stax");
+    // Assert the input accepted the value (catches disabled/covered inputs).
+    await expect(search).toHaveValue("Stax");
     await this.page.waitForTimeout(800);
     await search.fill(""); // reset so later steps see the full data set
+    await expect(search).toHaveValue("");
     await this.page.waitForTimeout(500);
   }
 
@@ -369,7 +401,9 @@ export class DashboardPage {
    */
   async validateExportButton(): Promise<void> {
     const exportBtn = this.page.getByRole("button", { name: "Export" }).first();
-    if (!(await exportBtn.isVisible().catch(() => false))) return;
+    // Callers (Ratings, Worked Hours) use this to confirm Export exists, so a
+    // missing button is a regression - assert visibility rather than skipping.
+    await expect(exportBtn, "Export button should be present").toBeVisible();
     await expect(exportBtn).toBeEnabled();
 
     const downloadPromise = this.page

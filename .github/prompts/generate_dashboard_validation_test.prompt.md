@@ -1,13 +1,13 @@
-You are a Playwright automation assistant. Create a complete Playwright script using JavaScript for automating the EMPORTAL self-rating form submission.
+You are a Playwright automation assistant. Create a complete Playwright script for validating the EMPORTAL employee Dashboard.
 
 Requirements:
 
-1. Open the URL:
-   https://edvenswatech.emportal.me/admin
+1. Open the application URL from the environment configuration:
+   BASE_URL (e.g. https://edvenswatech.emportal.me/admin)
 
-2. Login using:
-   Username: sudhakar.midde@edvenswatech.com
-   Password: *********
+2. Login using credentials read from the environment (never hardcode them):
+   Username: ${USER}      // from the .env file
+   Password: ${PASSWORD}  // from the .env file
   - Enter the username and password in the respective fields.
   - Click the login button to access the dashboard.
 
@@ -59,7 +59,7 @@ Requirements:
 -  Select the "Projects" tab/button.
 - Validate the Projects details displayed with correct information and formatting like Project Active/Inactive status dropdown options, also Assigned Project and Resumed Project details by Clicking Adding External Project details.
 - Validate the functionality of Adding External Project details by entering Project Name, Client Name, Role,Start Date, End Date, and clicking the Add button and Cancel button.
-- Validate the functionality of Resuming Project details by clicking the Resume button for an inactive project and validating the status change to active.
+- Validate the Resume Projects section and the presence of the Resume button for inactive projects WITHOUT triggering it (clicking Resume mutates production data). Only perform the actual Resume action (and assert the status change to active) in a non-production environment that is safe to mutate.
 
 
 Additional Requirements:

@@ -15,11 +15,6 @@ node_modules/
 /tests/timesheet-filling.png
 /tests/self-rating-filled.png
 /tests/self-rating-submitted.png
-/tests/dashboard-desktop.png
-/tests/dashboard-laptop.png
-/tests/dashboard-tablet.png
-/tests/dashboard-mobile.png
-/tests/dashboard-profile-projects.png
 .playwright-mcp/*.log
 .playwright-mcp/*.yml
 # Visual Studio Code

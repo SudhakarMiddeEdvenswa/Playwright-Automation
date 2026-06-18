@@ -7,7 +7,7 @@ Requirements:
 
 2. Login using:
    Username: sudhakar.midde@edvenswatech.com
-   Password: Mar09@2024
+   Password: *********
   - Enter the username and password in the respective fields.
   - Enter ReCaptcha if prompted (Note: This may require manual intervention as automating Captcha is not recommended).
   - Click the login button to access the dashboard.

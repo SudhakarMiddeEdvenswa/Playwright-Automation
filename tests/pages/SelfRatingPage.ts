@@ -34,17 +34,83 @@ export class SelfRatingPage {
   }
 
   /**
+   * Set the "Start Date" of the My Ratings date filter to `periodStart`
+   * (DD/MM/YYYY), narrowing the period table to appraisal periods on/after that
+   * date. The filter is a MUI segmented date field: three contenteditable
+   * spinbuttons (Day / Month / Year). Each segment is clicked, then its digits
+   * are typed in quick succession so MUI combines them (it resets the digit
+   * buffer after a short idle, so a per-segment click + fast type is the
+   * reliable way to set a leading-zero day like "01").
+   */
+  async selectStartDate(periodStart: string): Promise<void> {
+    const match = periodStart.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) {
+      throw new Error(
+        `periodStart must be formatted DD/MM/YYYY, got "${periodStart}".`
+      );
+    }
+    const [, dd, mm, yyyy] = match;
+
+    const startGroup = this.page.getByRole("group", { name: "Start Date" });
+    await expect(
+      startGroup,
+      "Start Date filter not found on the My Ratings page."
+    ).toBeVisible();
+
+    const setSegment = async (name: string, digits: string) => {
+      const segment = startGroup.getByRole("spinbutton", { name });
+      await segment.click();
+      await segment.pressSequentially(digits, { delay: 60 });
+    };
+
+    await setSegment("Day", dd);
+    await setSegment("Month", mm);
+    await setSegment("Year", yyyy);
+
+    // Confirm each segment reflects the requested date before the table
+    // re-filters. (The field's hidden textbox is aria-hidden, so the visible
+    // spinbutton segments are the reliable thing to assert on.)
+    await expect(
+      startGroup.getByRole("spinbutton", { name: "Day" }),
+      `Start Date day did not update to ${dd}.`
+    ).toHaveText(dd);
+    await expect(
+      startGroup.getByRole("spinbutton", { name: "Month" })
+    ).toHaveText(mm);
+    await expect(
+      startGroup.getByRole("spinbutton", { name: "Year" })
+    ).toHaveText(yyyy);
+  }
+
+  /**
    * Open the self-rating form for the period whose range starts with
    * `periodStart` (e.g. "01/06/2026"). Clicks the row's Start/Continue action.
+   *
+   * When `selectStartDate` has already narrowed the table to a single period,
+   * the exact `periodStart` text may not appear in that row (e.g. a 2nd-half
+   * period "16/06.." isolated by a "15/06.." filter), so we fall back to the
+   * single remaining data row.
    */
   async openRatingPeriod(periodStart: string): Promise<void> {
-    const row = this.page
-      .getByRole("row")
-      .filter({ hasText: periodStart })
-      .first();
+    const dataRows = this.page.locator("table tbody tr");
+    const textRow = dataRows.filter({ hasText: periodStart });
+
+    // Wait for the table to settle after the date filter applies: either the
+    // period's own row is present, or the filter has isolated a single row.
+    await expect
+      .poll(
+        async () =>
+          (await textRow.count()) > 0 || (await dataRows.count()) === 1,
+        { message: `No rating period row found for "${periodStart}".` }
+      )
+      .toBe(true);
+
+    const row =
+      (await textRow.count()) > 0 ? textRow.first() : dataRows.first();
+
     await expect(
       row,
-      `No rating period row found starting "${periodStart}".`
+      `No rating period row found for "${periodStart}".`
     ).toBeVisible();
 
     await row

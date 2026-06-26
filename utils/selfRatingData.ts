@@ -39,13 +39,28 @@ export interface RatingSection {
   criteria: RatingCriterion[];
 }
 
+// Computes the self-appraisal period start date for the current month, formatted
+// DD/MM/YYYY as shown in the EmPortal UI. EmPortal runs two appraisal windows per
+// month: the 1st-half period starts on the 1st and the 2nd-half period starts on
+// the 15th. If today falls between the 1st and the 15th, target the 1st-of-month
+// period; otherwise target the 15th-of-month period.
+function currentPeriodStart(): string {
+  const now = new Date();
+  const day = now.getDate() <= 15 ? 1 : 15;
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = now.getFullYear();
+  return `${String(day).padStart(2, "0")}/${month}/${year}`;
+}
+
 // The self-appraisal period to target. EmPortal 2.0 lists periods on the
 // /admin/my-ratings page; each row shows a "DD/MM/YYYY - DD/MM/YYYY" range and
 // an action button (Start / Continue). `periodStart` matches the start of the
 // range used to find and open the right row.
 export const selfRatingPeriod = {
   // Start date of the period row to open, formatted DD/MM/YYYY as shown in the UI.
-  periodStart: process.env.RATING_START_DATE || "01/06/2026",
+  // Defaults to the current month's period based on today's date; override with
+  // the RATING_START_DATE env var when a specific period is needed.
+  periodStart: process.env.RATING_START_DATE || currentPeriodStart(),
 };
 
 // Whether to actually submit the rating. Submitting permanently records the

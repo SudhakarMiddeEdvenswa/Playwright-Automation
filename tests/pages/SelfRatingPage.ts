@@ -31,55 +31,118 @@ export class SelfRatingPage {
     await expect(
       this.page.getByRole("heading", { name: "My Ratings", level: 1 })
     ).toBeVisible();
+    // Disable CSS transitions/animations for the rest of this page's lifetime.
+    // The date-picker's month-slide keeps a second (outgoing) month grid mounted
+    // mid-animation and continuously transforms the day cells, so a click can
+    // land on the wrong day or hit a detaching element. With animations off the
+    // month switches instantly and each day cell is immediately stable.
+    await this.page.addStyleTag({
+      content:
+        "*,*::before,*::after{transition:none!important;animation:none!important;}",
+    });
   }
 
   /**
    * Set the "Start Date" of the My Ratings date filter to `periodStart`
    * (DD/MM/YYYY), narrowing the period table to appraisal periods on/after that
-   * date. The filter is a MUI segmented date field: three contenteditable
-   * spinbuttons (Day / Month / Year). Each segment is clicked, then its digits
-   * are typed in quick succession so MUI combines them (it resets the digit
-   * buffer after a short idle, so a per-segment click + fast type is the
-   * reliable way to set a leading-zero day like "01").
+   * date.
    */
   async selectStartDate(periodStart: string): Promise<void> {
-    const match = periodStart.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    await this.setDateFilter("Start Date", periodStart);
+  }
+
+  /**
+   * Set the "End Date" of the My Ratings date filter to `periodEnd`
+   * (DD/MM/YYYY). Pair with {@link selectStartDate} to bound the table to a
+   * single appraisal period regardless of today's date. Without it the End Date
+   * filter stays at today, so a period whose end has already passed (e.g. asking
+   * for 16/06-30/06 while the clock is in July) is no longer isolated.
+   */
+  async selectEndDate(periodEnd: string): Promise<void> {
+    await this.setDateFilter("End Date", periodEnd);
+  }
+
+  /**
+   * Set one MUI date field ("Start Date" | "End Date") to a DD/MM/YYYY value by
+   * driving its calendar popup.
+   *
+   * Why not type into the Day/Month/Year segments directly: the two fields are a
+   * linked range whose refetch remounts the inputs mid-edit, so typing into the
+   * second field corrupts the value of the first (e.g. Start becomes "30/06/0202")
+   * and fires a request that leaves the table stuck on "Failed to fetch employee
+   * ratings". Picking from the calendar sets each date atomically and avoids that.
+   *
+   * The day is matched by its unique `data-timestamp` (midnight local time) rather
+   * than its day number, because MUI keeps the adjacent month's grid mounted
+   * during the slide animation and a bare "16" would match two cells (e.g. 16 Jun
+   * and 16 Jul). Node and the browser share the machine timezone (no `timezoneId`
+   * override in the Playwright config), so the timestamps line up.
+   */
+  private async setDateFilter(
+    groupName: "Start Date" | "End Date",
+    value: string
+  ): Promise<void> {
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (!match) {
       throw new Error(
-        `periodStart must be formatted DD/MM/YYYY, got "${periodStart}".`
+        `${groupName} must be formatted DD/MM/YYYY, got "${value}".`
       );
     }
-    const [, dd, mm, yyyy] = match;
+    const [, ddStr, mmStr, yyyyStr] = match;
+    const dd = Number(ddStr);
+    const mm = Number(mmStr);
+    const yyyy = Number(yyyyStr);
 
-    const startGroup = this.page.getByRole("group", { name: "Start Date" });
+    const group = this.page.getByRole("group", { name: groupName });
     await expect(
-      startGroup,
-      "Start Date filter not found on the My Ratings page."
+      group,
+      `${groupName} filter not found on the My Ratings page.`
     ).toBeVisible();
 
-    const setSegment = async (name: string, digits: string) => {
-      const segment = startGroup.getByRole("spinbutton", { name });
-      await segment.click();
-      await segment.pressSequentially(digits, { delay: 60 });
-    };
+    // Open the calendar popup for this field.
+    await group.getByRole("button", { name: /^Choose date/ }).click();
+    const dialog = this.page.getByRole("dialog", { name: groupName });
+    await expect(dialog).toBeVisible();
 
-    await setSegment("Day", dd);
-    await setSegment("Month", mm);
-    await setSegment("Year", yyyy);
+    // Navigate to the target month using the calendar header (e.g. "June 2026").
+    const targetLabel = `${MONTH_NAMES[mm - 1]} ${yyyy}`;
+    for (let i = 0; i < 36; i++) {
+      const header = (
+        await dialog.getByText(MONTH_YEAR_RE).first().textContent()
+      )?.trim();
+      if (!header) throw new Error(`Could not read the calendar header for ${groupName}.`);
+      if (header === targetLabel) break;
+      const [curMonth, curYear] = header.split(/\s+/);
+      const shown = new Date(Number(curYear), MONTH_NAMES.indexOf(curMonth), 1);
+      const target = new Date(yyyy, mm - 1, 1);
+      await dialog
+        .getByRole("button", {
+          name: shown > target ? "Previous month" : "Next month",
+        })
+        .click();
+    }
 
-    // Confirm each segment reflects the requested date before the table
-    // re-filters. (The field's hidden textbox is aria-hidden, so the visible
-    // spinbutton segments are the reliable thing to assert on.)
+    // Click the exact day by its unique data-timestamp, then wait for the popup to
+    // close. Matching the timestamp (not the day number) avoids the adjacent
+    // month's identically-numbered cell; animations are disabled (see
+    // navigateToMyRatings) so the cell is stable for a normal click.
+    const timestamp = new Date(yyyy, mm - 1, dd).getTime();
+    await dialog
+      .locator(`[role="gridcell"][data-timestamp="${timestamp}"]`)
+      .click();
+    await expect(dialog).toBeHidden();
+
+    // Confirm the field now reflects the chosen date.
     await expect(
-      startGroup.getByRole("spinbutton", { name: "Day" }),
-      `Start Date day did not update to ${dd}.`
-    ).toHaveText(dd);
+      group.getByRole("spinbutton", { name: "Day" }),
+      `${groupName} did not update to ${value}.`
+    ).toHaveText(ddStr);
     await expect(
-      startGroup.getByRole("spinbutton", { name: "Month" })
-    ).toHaveText(mm);
+      group.getByRole("spinbutton", { name: "Month" })
+    ).toHaveText(mmStr);
     await expect(
-      startGroup.getByRole("spinbutton", { name: "Year" })
-    ).toHaveText(yyyy);
+      group.getByRole("spinbutton", { name: "Year" })
+    ).toHaveText(yyyyStr);
   }
 
   /**
@@ -117,9 +180,20 @@ export class SelfRatingPage {
       .getByRole("button", { name: /Start|Continue|Resume|Edit|View/ })
       .click();
 
+    // The rating form is a separate route that fetches the period, the UK-score
+    // chart and previous comments before it paints, so allow well beyond the
+    // default 5s for its subtitle to appear. If it never appears the form is
+    // stuck on its loading spinner, which so far has been EmPortal's
+    // GET /api/appraisals/{id}/ratings returning a 200 header but never
+    // finishing the body (a backend hang), not a problem with this automation.
     await expect(
-      this.page.getByText("Rate your own performance for this appraisal period")
-    ).toBeVisible();
+      this.page.getByText(
+        "Rate your own performance for this appraisal period"
+      ),
+      "Rating form never rendered (stuck on the loading spinner). This period's " +
+        "GET /api/appraisals/{id}/ratings likely hung server-side; retry when the " +
+        "EmPortal backend is responsive."
+    ).toBeVisible({ timeout: 30_000 });
   }
 
   // --- Read-only guard ----------------------------------------------------
@@ -242,6 +316,25 @@ export class SelfRatingPage {
     }
   }
 }
+
+/** Month names as rendered in the MUI calendar header (e.g. "June 2026"). */
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** Matches a calendar header like "June 2026". */
+const MONTH_YEAR_RE = new RegExp(`^(${MONTH_NAMES.join("|")})\\s+\\d{4}$`);
 
 /** Build a safe XPath string literal (handles embedded quotes via concat()). */
 function xpathLiteral(value: string): string {

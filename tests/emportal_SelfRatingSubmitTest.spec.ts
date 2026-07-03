@@ -54,7 +54,10 @@ test.describe("EmPortal 2.0 self-rating submission", () => {
     // 2. Open the target self-appraisal period.
     const ratingPage = new SelfRatingPage(page);
     await ratingPage.navigateToMyRatings();
+    // Bound BOTH ends of the date filter so the target period stays isolated
+    // even once today's date has moved past it (e.g. 16/06-30/06 filled in July).
     await ratingPage.selectStartDate(selfRatingPeriod.periodStart);
+    await ratingPage.selectEndDate(selfRatingPeriod.periodEnd);
     await ratingPage.openRatingPeriod(selfRatingPeriod.periodStart);
 
     // 3. Guard: a submitted period is read-only and cannot be filled.

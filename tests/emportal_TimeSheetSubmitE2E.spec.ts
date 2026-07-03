@@ -73,6 +73,23 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
     const tasksPage = new TasksPage(page);
     await tasksPage.navigateToManageTasks();
 
+    // EmPortal rejects duplicate tasks (same name + week), which leaves the
+    // "Add New Task" dialog open and fails the save. Clear this week's tasks
+    // first so the flow is idempotent and safe to re-run. No-op when nothing
+    // matches. (Rows with an already-submitted timesheet cannot be deleted.)
+    const weekStartDisplay = monday.format("DD/MM/YYYY"); // e.g. "29/06/2026"
+    for (const task of allTasks) {
+      const removed = await tasksPage.deleteTasksForWeek(
+        task.taskName,
+        weekStartDisplay
+      );
+      if (removed > 0) {
+        console.log(
+          `Removed ${removed} existing "${task.taskName}" task(s) for the week.`
+        );
+      }
+    }
+
     for (const task of allTasks) {
       await tasksPage.clickAddTasks();
       await tasksPage.fillTaskDetails(

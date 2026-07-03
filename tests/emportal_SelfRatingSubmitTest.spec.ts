@@ -54,8 +54,11 @@ test.describe("EmPortal 2.0 self-rating submission", () => {
     // 2. Open the target self-appraisal period.
     const ratingPage = new SelfRatingPage(page);
     await ratingPage.navigateToMyRatings();
-    // Bound BOTH ends of the date filter so the target period stays isolated
-    // even once today's date has moved past it (e.g. 16/06-30/06 filled in July).
+    // First move the range window onto the target month with the backward/forward
+    // buttons (the filter defaults to today's month), then bound BOTH ends of the
+    // filter so the target period stays isolated even once today's date has moved
+    // past it (e.g. 16/06-30/06 filled in July).
+    await ratingPage.adjustDateRangeToPeriod(selfRatingPeriod.periodStart);
     await ratingPage.selectStartDate(selfRatingPeriod.periodStart);
     await ratingPage.selectEndDate(selfRatingPeriod.periodEnd);
     await ratingPage.openRatingPeriod(selfRatingPeriod.periodStart);

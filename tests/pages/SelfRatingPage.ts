@@ -63,6 +63,61 @@ export class SelfRatingPage {
   }
 
   /**
+   * Bring the date-range window onto the month of `periodStart` using the range
+   * control's backward/forward chevron buttons before the exact dates are set.
+   * Each click shifts the window one whole month (1st -> last day), so this
+   * positions the displayed window on the target month when it is not already
+   * there (e.g. the filter defaults to today's month but we want a past period).
+   * A no-op when the window already shows the target month.
+   *
+   * Call this before {@link selectStartDate}/{@link selectEndDate}: aligning the
+   * window first means the requested range is within the currently shown period
+   * regardless of today's date, and the calendar then only fine-tunes the days.
+   */
+  async adjustDateRangeToPeriod(periodStart: string): Promise<void> {
+    const match = periodStart.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) {
+      throw new Error(
+        `periodStart must be formatted DD/MM/YYYY, got "${periodStart}".`
+      );
+    }
+    const targetMonth = Number(match[2]);
+    const targetYear = Number(match[3]);
+
+    const startGroup = this.page.getByRole("group", { name: "Start Date" });
+    const monthSeg = startGroup.getByRole("spinbutton", { name: "Month" });
+    const yearSeg = startGroup.getByRole("spinbutton", { name: "Year" });
+    // The range control's arrows are icon-only lucide chevrons (no accessible name).
+    const prev = this.page.locator("button:has(svg.lucide-chevron-left)").first();
+    const next = this.page.locator("button:has(svg.lucide-chevron-right)").first();
+
+    const readMonthYear = async () => ({
+      month: Number((await monthSeg.textContent())?.trim()),
+      year: Number((await yearSeg.textContent())?.trim()),
+    });
+
+    for (let i = 0; i < 36; i++) {
+      const { month, year } = await readMonthYear();
+      if (month === targetMonth && year === targetYear) return;
+      const targetIsEarlier =
+        year > targetYear || (year === targetYear && month > targetMonth);
+      const before = `${month}/${year}`;
+      await (targetIsEarlier ? prev : next).click();
+      // Wait for the window to actually shift before deciding the next hop.
+      await expect
+        .poll(async () => {
+          const r = await readMonthYear();
+          return `${r.month}/${r.year}`;
+        })
+        .not.toBe(before);
+    }
+    throw new Error(
+      `Could not bring the date range to ${String(targetMonth).padStart(2, "0")}/` +
+        `${targetYear} using the range navigation buttons.`
+    );
+  }
+
+  /**
    * Set one MUI date field ("Start Date" | "End Date") to a DD/MM/YYYY value by
    * driving its calendar popup.
    *

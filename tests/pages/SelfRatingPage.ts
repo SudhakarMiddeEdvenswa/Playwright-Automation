@@ -161,20 +161,40 @@ export class SelfRatingPage {
 
     // Navigate to the target month using the calendar header (e.g. "June 2026").
     const targetLabel = `${MONTH_NAMES[mm - 1]} ${yyyy}`;
+    let reachedTarget = false;
     for (let i = 0; i < 36; i++) {
       const header = (
         await dialog.getByText(MONTH_YEAR_RE).first().textContent()
       )?.trim();
       if (!header) throw new Error(`Could not read the calendar header for ${groupName}.`);
-      if (header === targetLabel) break;
+      if (header === targetLabel) {
+        reachedTarget = true;
+        break;
+      }
       const [curMonth, curYear] = header.split(/\s+/);
-      const shown = new Date(Number(curYear), MONTH_NAMES.indexOf(curMonth), 1);
+      const curMonthIndex = MONTH_NAMES.indexOf(curMonth);
+      if (curMonthIndex === -1) {
+        throw new Error(
+          `Unexpected ${groupName} calendar header "${header}"; cannot determine ` +
+            `the navigation direction.`
+        );
+      }
+      const shown = new Date(Number(curYear), curMonthIndex, 1);
       const target = new Date(yyyy, mm - 1, 1);
       await dialog
         .getByRole("button", {
           name: shown > target ? "Previous month" : "Next month",
         })
         .click();
+    }
+    // Never click a day before confirming the calendar is on the target month:
+    // otherwise a fall-through could select an identically-numbered day in the
+    // wrong month and make the spec silently pass on bad data.
+    if (!reachedTarget) {
+      throw new Error(
+        `Could not navigate the ${groupName} calendar to ${targetLabel} within ` +
+          `36 steps.`
+      );
     }
 
     // Click the exact day by its unique data-timestamp, then wait for the popup to

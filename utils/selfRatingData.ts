@@ -39,28 +39,41 @@ export interface RatingSection {
   criteria: RatingCriterion[];
 }
 
-// Computes the self-appraisal period start date for the current month, formatted
-// DD/MM/YYYY as shown in the EmPortal UI. EmPortal runs two appraisal windows per
-// month: the 1st-half period starts on the 1st and the 2nd-half period starts on
-// the 15th. If today falls between the 1st and the 15th, target the 1st-of-month
-// period; otherwise target the 15th-of-month period.
-function currentPeriodStart(): string {
+// Computes the current self-appraisal period (start + end) for today's date,
+// formatted DD/MM/YYYY as shown in the EmPortal UI. EmPortal runs two appraisal
+// windows per month: the 1st-half period is the 1st -> 15th, and the 2nd-half
+// period is the 16th -> last day of the month. If today falls on/before the
+// 15th, target the 1st-half period; otherwise target the 2nd-half period.
+function currentPeriod(): { start: string; end: string } {
   const now = new Date();
-  const day = now.getDate() <= 15 ? 1 : 15;
-  const month = String(now.getMonth() + 1).padStart(2, "0");
   const year = now.getFullYear();
-  return `${String(day).padStart(2, "0")}/${month}/${year}`;
+  const monthIndex = now.getMonth(); // 0-based
+  const mm = String(monthIndex + 1).padStart(2, "0");
+  const fmt = (day: number) =>
+    `${String(day).padStart(2, "0")}/${mm}/${year}`;
+
+  if (now.getDate() <= 15) {
+    return { start: fmt(1), end: fmt(15) };
+  }
+  // Day 0 of the next month == last day of this month.
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+  return { start: fmt(16), end: fmt(lastDay) };
 }
 
 // The self-appraisal period to target. EmPortal 2.0 lists periods on the
 // /admin/my-ratings page; each row shows a "DD/MM/YYYY - DD/MM/YYYY" range and
-// an action button (Start / Continue). `periodStart` matches the start of the
-// range used to find and open the right row.
+// an action button (Start / Continue). `periodStart`/`periodEnd` set the date
+// filter so exactly the intended period row is isolated and opened.
+const defaultPeriod = currentPeriod();
 export const selfRatingPeriod = {
   // Start date of the period row to open, formatted DD/MM/YYYY as shown in the UI.
-  // Defaults to the current month's period based on today's date; override with
-  // the RATING_START_DATE env var when a specific period is needed.
-  periodStart: process.env.RATING_START_DATE || currentPeriodStart(),
+  // Defaults to the current period based on today's date; override with the
+  // RATING_START_DATE env var when a specific period is needed.
+  periodStart: process.env.RATING_START_DATE || defaultPeriod.start,
+  // End date of the period. Bounding both ends keeps the target period isolated
+  // even after today's date has moved past it (e.g. filling 16/06-30/06 in July).
+  // Override with the RATING_END_DATE env var.
+  periodEnd: process.env.RATING_END_DATE || defaultPeriod.end,
 };
 
 // Whether to actually submit the rating. Submitting permanently records the

@@ -32,8 +32,10 @@ const dateFormat = "YYYY-MM-DD";
 // with the editable weekday columns.
 const monday = dayjs().startOf("week").add(1, "day"); // startOf('week') is Sunday
 const friday = monday.add(4, "day");
-const taskStartDate = monday.format(dateFormat);
-const taskEndDate = friday.format(dateFormat);
+// Anchor to the CURRENT week so task creation and the per-week cleanup
+// (weekStartDisplay, derived from `monday`) target the same week.
+const taskStartDate = monday.format(dateFormat);// Monday, 17 August 2026
+const taskEndDate = friday.format(dateFormat);// Friday, 21 August 2026
 const userName = timesheetData.userName; // "Midde Sudhakar"
 
 // All seven tasks for the week. The heavy task (Code Commit Push, 10h estimate)

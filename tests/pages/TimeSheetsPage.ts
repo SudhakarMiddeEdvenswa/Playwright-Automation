@@ -6,8 +6,9 @@ import { Page, Locator, expect } from "@playwright/test";
  * The timesheet is now a WEEKLY GRID (table "timesheet table"):
  *   columns = Project | Task Name | Estimated Time | MON..SUN (per date) | Total
  *   each weekday cell is a MUI time field rendered as a `group "hh:mm"` with
- *   separate "Hours" and "Minutes" spinbuttons. Mon-Fri are editable; Sat/Sun
- *   and the Total column are disabled.
+ *   separate "Hours" and "Minutes" spinbuttons. A weekday cell is editable only
+ *   when the task's own date range covers that day; days the task does not span
+ *   (and Sat/Sun and the Total column) render disabled.
  *
  * Reached via the left-nav "Project Execution" fly-out -> "Timesheet" (the old
  * "Manage Timesheets Manage" button is gone). Saving/submitting is done with the
@@ -74,36 +75,57 @@ export class TimeSheetsPage {
   /**
    * Fill the same number of hours into every editable weekday (Mon-Fri) of a
    * task row. `hours` is the hour value, e.g. "2" -> 02:00, "1" -> 01:00.
+   *
+   * A weekday cell is only editable when the task's date range covers that day,
+   * so disabled cells are skipped. The MUI Hours section is filled by focusing
+   * and typing (a plain fill() can drop digits on these fields), with fill() as
+   * a fallback.
    */
   async fillTaskRowDaily(taskName: string, hours: string) {
     const row = this.taskRow(taskName);
     await expect(row, `Task row "${taskName}" not found in the grid.`).toBeVisible();
 
+    const hh = hours.padStart(2, "0");
     const hourFields = row.getByRole("spinbutton", { name: "Hours" });
-    // Order is MON..SUN; only the first five (weekdays) are editable.
+    // Order is MON..SUN; only the first five are weekdays.
     for (let day = 0; day < 5; day++) {
       const field = hourFields.nth(day);
-      await field.fill(hours.padStart(2, "0"));
+      // Skip days the task does not span (rendered disabled).
+      if (!(await field.isEditable().catch(() => false))) continue;
+      await field.click();
+      await this.page.keyboard.type(hh, { delay: 40 });
+      if (((await field.textContent()) ?? "").trim() !== hh) {
+        await field.fill(hh);
+      }
     }
     // Commit the last edited cell.
     await this.page.keyboard.press("Tab");
   }
 
   /**
-   * Fill every editable weekday (Mon-Fri) cell across all task rows with the
-   * same hour value. Disabled Sat/Sun and Total cells are skipped. Returns the
-   * number of cells filled.
+   * Fill every editable weekday cell across all task rows with the same hour
+   * value. A cell is editable only when its task's date range covers that day;
+   * disabled days, Sat/Sun and Total cells are skipped. Returns the number of
+   * cells filled. Uses role-based lookup + keyboard entry (the MUI Hours section
+   * can silently drop a plain fill()), matching fillTaskRowDaily.
    */
   async fillAllWeekdayHours(hours: string): Promise<number> {
-    const editable = this.page.locator(
-      '[role="spinbutton"][aria-label="Hours"]:not([aria-disabled="true"])'
-    );
-    const count = await editable.count();
-    for (let i = 0; i < count; i++) {
-      await editable.nth(i).fill(hours.padStart(2, "0"));
+    const hh = hours.padStart(2, "0");
+    const hourFields = this.page.getByRole("spinbutton", { name: "Hours" });
+    const total = await hourFields.count();
+    let filled = 0;
+    for (let i = 0; i < total; i++) {
+      const field = hourFields.nth(i);
+      if (!(await field.isEditable().catch(() => false))) continue;
+      await field.click();
+      await this.page.keyboard.type(hh, { delay: 40 });
+      if (((await field.textContent()) ?? "").trim() !== hh) {
+        await field.fill(hh);
+      }
+      filled++;
     }
     await this.page.keyboard.press("Tab");
-    return count;
+    return filled;
   }
 
   /** Read a task row's weekly Total cell (e.g. "10:00"). */

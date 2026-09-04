@@ -3,9 +3,10 @@ import { Page, expect } from "@playwright/test";
 /**
  * Page Object for the EmPortal 2.0 employee "Dashboard".
  *
- * The "Dashboard" left-nav link opens the logged-in user's own employee profile
- * (route: /admin/employees/{id}). The page is organised into six top tabs:
- *   Overview | Tasks | Ratings | Timesheets | Worked Hours | Profile
+ * The dashboard is the logged-in user's own employee view at /admin/dashboard
+ * (the legacy /admin/employees/{id} route). It opens on a "Home" tab and the tab
+ * strip is:
+ *   Home | Overview | Tasks | Ratings | Timesheets | Worked Hours | Profile
  * and the Profile tab has its own sub-tabs rendered as buttons:
  *   User Info | Employee Time | Projects | Skills | Certifications
  *
@@ -23,10 +24,10 @@ export class DashboardPage {
 
   // --- Navigation ---------------------------------------------------------
 
-  /** Open the Dashboard via the left-nav "Dashboard" link and wait for tabs. */
+  /** Open the Dashboard (/admin/dashboard) and wait for the tab strip. */
   async navigateToDashboard(): Promise<void> {
-    await this.page.getByRole("link", { name: "Dashboard" }).click();
-    await this.page.waitForURL(/\/admin\/employees\//, { timeout: 20000 });
+    await this.page.goto("/admin/dashboard");
+    await this.page.waitForURL(/\/admin\/dashboard/, { timeout: 20000 });
     // The tab strip is the reliable "dashboard is ready" signal.
     await expect(this.page.getByRole("tab", { name: "Overview" })).toBeVisible({
       timeout: 20000,
@@ -101,8 +102,9 @@ export class DashboardPage {
     await expect(
       this.page.getByRole("heading", { name: "Performance by Project" })
     ).toBeVisible();
-    // Distribution chart legend confirms the chart rendered with labels.
-    await expect(this.page.getByText("Tasks Completed").first()).toBeVisible();
+    // The chart surfaces (Monthly Progress + Performance by Project) confirm the
+    // Overview rendered. (The old "Tasks Completed" distribution legend was
+    // removed in the dashboard refresh.)
     expect(await this.hasChart(), "Overview should render a chart").toBeTruthy();
   }
 
@@ -141,8 +143,9 @@ export class DashboardPage {
 
     await this.validateStatusDropdown();
     await this.validateDateRangeInputs();
-    await this.validateSearchBox("Search...");
-    await this.validateExportButton();
+    await this.validateSearchBox("Search by Project / PM");
+    // The ratings export control is labelled "Download Ratings" (was "Export").
+    await this.validateExportButton("Download Ratings");
   }
 
   /**
@@ -282,16 +285,24 @@ export class DashboardPage {
   /** Validate the "User Info" section shows the expected identity fields. */
   async validateProfileUserInfo(email: string): Promise<void> {
     await this.selectProfileSection("User Info");
+    // The User Info section's heading is now "Personal Information" (was
+    // "User Information").
     await expect(
-      this.page.getByRole("heading", { name: "User Information" })
+      this.page.getByRole("heading", { name: "Personal Information" })
     ).toBeVisible();
     // Key labels and the known email value.
-    for (const label of ["Role", "Status", "Last Login", "Job Title"]) {
+    for (const label of ["Role", "Status", "Job Title"]) {
       await expect(
         this.page.getByText(label, { exact: true }).first(),
         `User Info field "${label}" should be visible`
       ).toBeVisible();
     }
+    // "Last Login" is rendered inline with its timestamp ("Last Login: <ts>"),
+    // so it has no exact-match element - match it as a substring.
+    await expect(
+      this.page.getByText(/Last Login/).first(),
+      `User Info field "Last Login" should be visible`
+    ).toBeVisible();
     await expect(this.page.getByText(email).first()).toBeVisible();
   }
 
@@ -301,7 +312,9 @@ export class DashboardPage {
     await expect(
       this.page.getByRole("heading", { name: "Employee Time" })
     ).toBeVisible();
-    for (const label of ["SHIFT", "HOLIDAY CALENDAR", "ATTENDANCE NUMBER"]) {
+    // Labels render Title Case in the DOM now (were UPPERCASE); the visual caps
+    // are CSS text-transform, so match the underlying text.
+    for (const label of ["Shift", "Holiday Calendar", "Attendance Number"]) {
       await expect(
         this.page.getByText(label, { exact: true }).first(),
         `Employee Time field "${label}" should be visible`
@@ -399,11 +412,13 @@ export class DashboardPage {
    * trigger a CSV/Excel download; we capture the download best-effort and assert
    * the filename extension when one fires (non-fatal if it opens a menu instead).
    */
-  async validateExportButton(): Promise<void> {
-    const exportBtn = this.page.getByRole("button", { name: "Export" }).first();
-    // Callers (Ratings, Worked Hours) use this to confirm Export exists, so a
-    // missing button is a regression - assert visibility rather than skipping.
-    await expect(exportBtn, "Export button should be present").toBeVisible();
+  async validateExportButton(name: string = "Export"): Promise<void> {
+    const exportBtn = this.page.getByRole("button", { name }).first();
+    // Callers (Ratings, Worked Hours) use this to confirm the export control
+    // exists, so a missing button is a regression - assert visibility rather
+    // than skipping. The button label differs per tab ("Export" on Worked Hours,
+    // "Download Ratings" on Ratings).
+    await expect(exportBtn, `"${name}" button should be present`).toBeVisible();
     await expect(exportBtn).toBeEnabled();
 
     const downloadPromise = this.page

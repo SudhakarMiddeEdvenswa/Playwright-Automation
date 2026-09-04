@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { Page, Locator, expect } from "@playwright/test";
 
 /**
  * Page Object for the EmPortal 2.0 "Task Management" page (/admin/tasks).
@@ -6,12 +6,22 @@ import { Page, expect } from "@playwright/test";
  * Key differences from the legacy app:
  *  - Reached via the left-nav "Project Execution" fly-out -> "Tasks" (the old
  *    "Manage Tasks Manage Tasks" button is gone).
- *  - "Add Tasks" opens an "Add New Task" dialog whose fields were renamed:
+ *  - "Add Tasks" opens an "Add New Task" form whose fields were renamed:
  *      Task Description -> Description, Projects -> Project,
  *      Task Categories  -> Category,    hh:mm   -> Estimated Time (HH:MM).
  *  - Start/End dates are MUI date pickers with Day/Month/Year spinbuttons
  *    (displayed as DD/MM/YYYY) instead of a single date textbox.
- *  - The dialog is confirmed with "Create Task" (was "Save").
+ *  - The form is confirmed with "Create Task" (was "Save").
+ *
+ * Latest UI update:
+ *  - The "Add New Task" form is now a MUI Drawer (role="presentation"), no
+ *    longer a role="dialog", so it is scoped via `taskDrawer()` instead of
+ *    getByRole("dialog", ...).
+ *  - The task-list search box placeholder is now
+ *    "Search by task no, name, project, or description...".
+ *  - The list has a Start Date/End Date filter (defaults to the current month)
+ *    and the search only matches within that range, so callers widen it with
+ *    `setWeekDateFilter()` before searching for a week's tasks.
  */
 export class TasksPage {
   private page: Page;
@@ -25,18 +35,47 @@ export class TasksPage {
     await this.page
       .getByRole("button", { name: "Project Execution" })
       .hover();
-    await this.page.getByRole("link", { name: "Tasks", exact: true }).click();
+    // The dashboard <main> also has a "Tasks" quick-link, so getByRole("link",
+    // { name: "Tasks" }) is ambiguous. Target the fly-out link specifically as
+    // the only "Tasks" link that is not inside <main>.
+    await this.page
+      .locator('xpath=//a[normalize-space(.)="Tasks" and not(ancestor::main)]')
+      .click();
     await expect(
       this.page.getByRole("heading", { name: "Task Management" })
     ).toBeVisible();
   }
 
-  /** Open the "Add New Task" dialog. */
+  /**
+   * Set the task list's Start Date/End Date filter so a whole week is visible.
+   * The list defaults to the current month and the search box only matches rows
+   * inside this range, so a week that starts in the previous month (or ends in
+   * the next) would otherwise be hidden from search-driven cleanup.
+   * @param startDisplay / endDisplay  "DD/MM/YYYY", e.g. "31/08/2026".
+   */
+  async setWeekDateFilter(startDisplay: string, endDisplay: string) {
+    await this.fillListDateFilter("Start Date", startDisplay);
+    await this.fillListDateFilter("End Date", endDisplay);
+    // Allow the filtered list to refresh for the new range.
+    await this.page.waitForTimeout(500);
+  }
+
+  /**
+   * The "Add New Task" form panel. It renders as a MUI Drawer (role="presentation",
+   * no accessible name), so scope to the drawer paper that holds the header text
+   * rather than getByRole("dialog"). Scoping here also disambiguates the form's
+   * Start Date/End Date groups from the identically named list filter groups.
+   */
+  private taskDrawer(): Locator {
+    return this.page
+      .locator(".MuiDrawer-paper")
+      .filter({ hasText: "Add New Task" });
+  }
+
+  /** Open the "Add New Task" drawer. */
   async clickAddTasks() {
     await this.page.getByRole("button", { name: "Add Tasks" }).click();
-    await expect(
-      this.page.getByRole("dialog", { name: "Add New Task" })
-    ).toBeVisible();
+    await expect(this.taskDrawer()).toBeVisible();
   }
 
   /**
@@ -54,7 +93,7 @@ export class TasksPage {
     projectName: string,
     taskCategory: string
   ) {
-    const dialog = this.page.getByRole("dialog", { name: "Add New Task" });
+    const dialog = this.taskDrawer();
     const nameField = dialog.getByRole("textbox", { name: "Task Name" });
     const descField = dialog.getByRole("textbox", { name: "Description" });
 
@@ -76,10 +115,38 @@ export class TasksPage {
     // mid-fill; re-apply any that did not survive so the form is valid to submit.
     if ((await nameField.inputValue()) !== taskName) {
       await nameField.fill(taskName);
-      await descField.fill(taskDescription);
       await this.fillEstimatedTime(dialog, time);
     }
     await expect(nameField).toHaveValue(taskName);
+
+    // The Description field AI-auto-generates from the task name on first focus.
+    // That async generation lands a few seconds later and OVERWRITES whatever we
+    // typed, often with markdown ("**Task Description: ...") that starts with a
+    // non-letter and trips the "Must start with a capital letter" rule, blocking
+    // "Create Task". The generation is one-shot per dialog, so re-apply our
+    // explicit (capital-first) description LAST, after it has settled.
+    await this.setDescriptionRobustly(descField, taskDescription);
+  }
+
+  /**
+   * Force the Description field to hold our explicit text, defeating the async
+   * AI auto-generate that overwrites it. Overwrites, waits for any pending
+   * generation to land, and retries until our value sticks.
+   */
+  private async setDescriptionRobustly(
+    descField: Locator,
+    description: string
+  ) {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await descField.click();
+      await descField.press("ControlOrMeta+a");
+      await descField.press("Delete");
+      await descField.fill(description);
+      // Let any pending auto-generate resolve; if it clobbers our value we retry.
+      await this.page.waitForTimeout(2500);
+      if ((await descField.inputValue()) === description) return;
+    }
+    await expect(descField).toHaveValue(description);
   }
 
   /**
@@ -108,13 +175,13 @@ export class TasksPage {
 
   /** Confirm task creation ("Create Task" replaced the old "Save" button). */
   async saveTask() {
-    const createButton = this.page.getByRole("button", { name: "Create Task" });
+    const createButton = this.taskDrawer().getByRole("button", {
+      name: "Create Task",
+    });
     await expect(createButton).toBeEnabled();
     await createButton.click();
-    // The dialog closes once the task is created.
-    await expect(
-      this.page.getByRole("dialog", { name: "Add New Task" })
-    ).toBeHidden({ timeout: 15000 });
+    // The drawer closes once the task is created.
+    await expect(this.taskDrawer()).toBeHidden({ timeout: 15000 });
   }
 
   /** Delete a task by name (skips rows whose timesheet is already submitted). */
@@ -140,9 +207,11 @@ export class TasksPage {
     dateDisplay: string
   ): Promise<number> {
     // Filter the table to this task so matching rows are not hidden on a later
-    // page (the table paginates at 10 rows).
+    // page (the table paginates at 10 rows). NOTE: the search only matches rows
+    // within the Start Date/End Date filter range, so callers must widen it with
+    // setWeekDateFilter() first (see the spec).
     const search = this.page.getByRole("textbox", {
-      name: "Search tasks by name, project, or description...",
+      name: "Search by task no, name, project, or description...",
     });
     await search.fill("");
     await search.fill(taskName);
@@ -191,6 +260,34 @@ export class TasksPage {
   }
 
   // --- Helpers ------------------------------------------------------------
+
+  /**
+   * Fill one of the task list's date filter groups from a DD/MM/YYYY string.
+   * Same MUI date-field mechanics as fillDateGroup, but page-scoped (the filter
+   * lives on the list toolbar, and the Add Task drawer is closed here so the
+   * "Start Date"/"End Date" group names are unambiguous).
+   */
+  private async fillListDateFilter(groupName: string, display: string) {
+    const [day, month, year] = display.split("/");
+    const group = this.page.getByRole("group", { name: groupName }).first();
+    const dayField = group.getByRole("spinbutton", { name: "Day" });
+    const monthField = group.getByRole("spinbutton", { name: "Month" });
+    const yearField = group.getByRole("spinbutton", { name: "Year" });
+
+    await dayField.click();
+    await this.page.keyboard.type(`${day}${month}${year}`, { delay: 40 });
+
+    if (((await dayField.textContent()) ?? "").trim() !== day)
+      await dayField.fill(day);
+    if (((await monthField.textContent()) ?? "").trim() !== month)
+      await monthField.fill(month);
+    if (((await yearField.textContent()) ?? "").trim() !== year)
+      await yearField.fill(year);
+
+    await expect(dayField).toHaveText(day);
+    await expect(monthField).toHaveText(month);
+    await expect(yearField).toHaveText(year);
+  }
 
   /** Open a MUI combobox and pick the option with the exact given label. */
   private async selectComboboxOption(

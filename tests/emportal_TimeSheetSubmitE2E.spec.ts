@@ -32,8 +32,10 @@ const dateFormat = "YYYY-MM-DD";
 // with the editable weekday columns.
 const monday = dayjs().startOf("week").add(1, "day"); // startOf('week') is Sunday
 const friday = monday.add(4, "day");
-const taskStartDate = monday.format(dateFormat);
-const taskEndDate = friday.format(dateFormat);
+// Anchor to the CURRENT week so task creation and the per-week cleanup
+// (weekStartDisplay, derived from `monday`) target the same week.
+const taskStartDate = monday.format(dateFormat);// Monday, 17 August 2026
+const taskEndDate = friday.format(dateFormat);// Friday, 21 August 2026
 const userName = timesheetData.userName; // "Midde Sudhakar"
 
 // All seven tasks for the week. The heavy task (Code Commit Push, 10h estimate)
@@ -74,10 +76,17 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
     await tasksPage.navigateToManageTasks();
 
     // EmPortal rejects duplicate tasks (same name + week), which leaves the
-    // "Add New Task" dialog open and fails the save. Clear this week's tasks
+    // "Add New Task" drawer open and fails the save. Clear this week's tasks
     // first so the flow is idempotent and safe to re-run. No-op when nothing
     // matches. (Rows with an already-submitted timesheet cannot be deleted.)
     const weekStartDisplay = monday.format("DD/MM/YYYY"); // e.g. "29/06/2026"
+    const weekEndDisplay = friday.format("DD/MM/YYYY"); // e.g. "03/07/2026"
+
+    // The task list defaults to a current-month date filter and its search only
+    // matches rows inside that range. Widen it to this week so cleanup can find
+    // tasks even when the week straddles a month boundary.
+    await tasksPage.setWeekDateFilter(weekStartDisplay, weekEndDisplay);
+
     for (const task of allTasks) {
       const removed = await tasksPage.deleteTasksForWeek(
         task.taskName,

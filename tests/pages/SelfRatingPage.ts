@@ -5,16 +5,22 @@ import { RatingSection } from "../../utils/selfRatingData";
  * Page Object for the EmPortal 2.0 self-rating flow (/admin/my-ratings).
  *
  * The "My Ratings" page lists appraisal periods in a table; each row has an
- * action button (Start / Continue) that opens the self-rating form. The form is
- * organised into 5 paginated sections (Capability, Creativity, Collaboration,
- * Compliance, Customer). Each criterion is an accordion card with:
- *   - a custom 5-star widget (5 <button> elements, each a lucide-star SVG). The
- *     widget supports 0.5 increments: a click on the LEFT half of a star sets
- *     "x.5", a click on the RIGHT half sets the full "x".
- *   - a "Enter description..." textbox (+ an "Enhance text" AI helper).
- * Sections are navigated with Prev / Next (or the page-number buttons); the form
- * ends with "Save Draft" (always) and "Submit" (enabled on the last page when
- * complete).
+ * action button (Start / Continue) that opens the self-rating form. The list's
+ * date filter defaults to the current month, so the current period's row is
+ * already visible and is opened directly by its start date - no separate date
+ * navigation is required (the old month-chevron/date-range controls were removed
+ * in the refresh).
+ *
+ * The self-rating form (post-refresh) shows the 5 sections one at a time,
+ * navigated with a MUI pagination control (pages 1..5 / "Go to next page"). Each
+ * section heading is an <h5> (Capability, Creativity, Collaboration, Compliance,
+ * Customer). Each criterion is a MUI Accordion whose title is a <p>; inside it:
+ *   - a custom star widget: `div[role="slider"][aria-label="Rating"]` holding 5
+ *     star <span> elements. It supports 0.5 increments - clicking the LEFT half
+ *     of star N sets "N-0.5", the RIGHT half sets "N"; aria-valuenow reflects the
+ *     chosen value.
+ *   - an "Enter your comments..." textbox (+ an "Enhance" AI helper).
+ * The form ends with "Save Draft" (always) and "Submit" (last page when complete).
  */
 export class SelfRatingPage {
   private readonly page: Page;
@@ -31,11 +37,8 @@ export class SelfRatingPage {
     await expect(
       this.page.getByRole("heading", { name: "My Ratings", level: 1 })
     ).toBeVisible();
-    // Disable CSS transitions/animations for the rest of this page's lifetime.
-    // The date-picker's month-slide keeps a second (outgoing) month grid mounted
-    // mid-animation and continuously transforms the day cells, so a click can
-    // land on the wrong day or hit a detaching element. With animations off the
-    // month switches instantly and each day cell is immediately stable.
+    // Disable CSS transitions/animations for stability (accordion expand, star
+    // hover, section pagination), so clicks land on settled, non-animating cells.
     await this.page.addStyleTag({
       content:
         "*,*::before,*::after{transition:none!important;animation:none!important;}",
@@ -43,198 +46,18 @@ export class SelfRatingPage {
   }
 
   /**
-   * Set the "Start Date" of the My Ratings date filter to `periodStart`
-   * (DD/MM/YYYY), narrowing the period table to appraisal periods on/after that
-   * date.
-   */
-  async selectStartDate(periodStart: string): Promise<void> {
-    await this.setDateFilter("Start Date", periodStart);
-  }
-
-  /**
-   * Set the "End Date" of the My Ratings date filter to `periodEnd`
-   * (DD/MM/YYYY). Pair with {@link selectStartDate} to bound the table to a
-   * single appraisal period regardless of today's date. Without it the End Date
-   * filter stays at today, so a period whose end has already passed (e.g. asking
-   * for 16/06-30/06 while the clock is in July) is no longer isolated.
-   */
-  async selectEndDate(periodEnd: string): Promise<void> {
-    await this.setDateFilter("End Date", periodEnd);
-  }
-
-  /**
-   * Bring the date-range window onto the month of `periodStart` using the range
-   * control's backward/forward chevron buttons before the exact dates are set.
-   * Each click shifts the window one whole month (1st -> last day), so this
-   * positions the displayed window on the target month when it is not already
-   * there (e.g. the filter defaults to today's month but we want a past period).
-   * A no-op when the window already shows the target month.
-   *
-   * Call this before {@link selectStartDate}/{@link selectEndDate}: aligning the
-   * window first means the requested range is within the currently shown period
-   * regardless of today's date, and the calendar then only fine-tunes the days.
-   */
-  async adjustDateRangeToPeriod(periodStart: string): Promise<void> {
-    const match = periodStart.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (!match) {
-      throw new Error(
-        `periodStart must be formatted DD/MM/YYYY, got "${periodStart}".`
-      );
-    }
-    const targetMonth = Number(match[2]);
-    const targetYear = Number(match[3]);
-
-    const startGroup = this.page.getByRole("group", { name: "Start Date" });
-    const monthSeg = startGroup.getByRole("spinbutton", { name: "Month" });
-    const yearSeg = startGroup.getByRole("spinbutton", { name: "Year" });
-    // The range control's arrows are icon-only lucide chevrons (no accessible name).
-    const prev = this.page.locator("button:has(svg.lucide-chevron-left)").first();
-    const next = this.page.locator("button:has(svg.lucide-chevron-right)").first();
-
-    const readMonthYear = async () => ({
-      month: Number((await monthSeg.textContent())?.trim()),
-      year: Number((await yearSeg.textContent())?.trim()),
-    });
-
-    for (let i = 0; i < 36; i++) {
-      const { month, year } = await readMonthYear();
-      if (month === targetMonth && year === targetYear) return;
-      const targetIsEarlier =
-        year > targetYear || (year === targetYear && month > targetMonth);
-      const before = `${month}/${year}`;
-      await (targetIsEarlier ? prev : next).click();
-      // Wait for the window to actually shift before deciding the next hop.
-      await expect
-        .poll(async () => {
-          const r = await readMonthYear();
-          return `${r.month}/${r.year}`;
-        })
-        .not.toBe(before);
-    }
-    throw new Error(
-      `Could not bring the date range to ${String(targetMonth).padStart(2, "0")}/` +
-        `${targetYear} using the range navigation buttons.`
-    );
-  }
-
-  /**
-   * Set one MUI date field ("Start Date" | "End Date") to a DD/MM/YYYY value by
-   * driving its calendar popup.
-   *
-   * Why not type into the Day/Month/Year segments directly: the two fields are a
-   * linked range whose refetch remounts the inputs mid-edit, so typing into the
-   * second field corrupts the value of the first (e.g. Start becomes "30/06/0202")
-   * and fires a request that leaves the table stuck on "Failed to fetch employee
-   * ratings". Picking from the calendar sets each date atomically and avoids that.
-   *
-   * The day is matched by its unique `data-timestamp` (midnight local time) rather
-   * than its day number, because MUI keeps the adjacent month's grid mounted
-   * during the slide animation and a bare "16" would match two cells (e.g. 16 Jun
-   * and 16 Jul). Node and the browser share the machine timezone (no `timezoneId`
-   * override in the Playwright config), so the timestamps line up.
-   */
-  private async setDateFilter(
-    groupName: "Start Date" | "End Date",
-    value: string
-  ): Promise<void> {
-    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (!match) {
-      throw new Error(
-        `${groupName} must be formatted DD/MM/YYYY, got "${value}".`
-      );
-    }
-    const [, ddStr, mmStr, yyyyStr] = match;
-    const dd = Number(ddStr);
-    const mm = Number(mmStr);
-    const yyyy = Number(yyyyStr);
-
-    const group = this.page.getByRole("group", { name: groupName });
-    await expect(
-      group,
-      `${groupName} filter not found on the My Ratings page.`
-    ).toBeVisible();
-
-    // Open the calendar popup for this field.
-    await group.getByRole("button", { name: /^Choose date/ }).click();
-    const dialog = this.page.getByRole("dialog", { name: groupName });
-    await expect(dialog).toBeVisible();
-
-    // Navigate to the target month using the calendar header (e.g. "June 2026").
-    const targetLabel = `${MONTH_NAMES[mm - 1]} ${yyyy}`;
-    let reachedTarget = false;
-    for (let i = 0; i < 36; i++) {
-      const header = (
-        await dialog.getByText(MONTH_YEAR_RE).first().textContent()
-      )?.trim();
-      if (!header) throw new Error(`Could not read the calendar header for ${groupName}.`);
-      if (header === targetLabel) {
-        reachedTarget = true;
-        break;
-      }
-      const [curMonth, curYear] = header.split(/\s+/);
-      const curMonthIndex = MONTH_NAMES.indexOf(curMonth);
-      if (curMonthIndex === -1) {
-        throw new Error(
-          `Unexpected ${groupName} calendar header "${header}"; cannot determine ` +
-            `the navigation direction.`
-        );
-      }
-      const shown = new Date(Number(curYear), curMonthIndex, 1);
-      const target = new Date(yyyy, mm - 1, 1);
-      await dialog
-        .getByRole("button", {
-          name: shown > target ? "Previous month" : "Next month",
-        })
-        .click();
-    }
-    // Never click a day before confirming the calendar is on the target month:
-    // otherwise a fall-through could select an identically-numbered day in the
-    // wrong month and make the spec silently pass on bad data.
-    if (!reachedTarget) {
-      throw new Error(
-        `Could not navigate the ${groupName} calendar to ${targetLabel} within ` +
-          `36 steps.`
-      );
-    }
-
-    // Click the exact day by its unique data-timestamp, then wait for the popup to
-    // close. Matching the timestamp (not the day number) avoids the adjacent
-    // month's identically-numbered cell; animations are disabled (see
-    // navigateToMyRatings) so the cell is stable for a normal click.
-    const timestamp = new Date(yyyy, mm - 1, dd).getTime();
-    await dialog
-      .locator(`[role="gridcell"][data-timestamp="${timestamp}"]`)
-      .click();
-    await expect(dialog).toBeHidden();
-
-    // Confirm the field now reflects the chosen date.
-    await expect(
-      group.getByRole("spinbutton", { name: "Day" }),
-      `${groupName} did not update to ${value}.`
-    ).toHaveText(ddStr);
-    await expect(
-      group.getByRole("spinbutton", { name: "Month" })
-    ).toHaveText(mmStr);
-    await expect(
-      group.getByRole("spinbutton", { name: "Year" })
-    ).toHaveText(yyyyStr);
-  }
-
-  /**
    * Open the self-rating form for the period whose range starts with
-   * `periodStart` (e.g. "01/06/2026"). Clicks the row's Start/Continue action.
-   *
-   * When `selectStartDate` has already narrowed the table to a single period,
-   * the exact `periodStart` text may not appear in that row (e.g. a 2nd-half
-   * period "16/06.." isolated by a "15/06.." filter), so we fall back to the
-   * single remaining data row.
+   * `periodStart` (e.g. "01/09/2026"). The list defaults to the current month, so
+   * the current period's row is present; it is matched by its start date and its
+   * Start/Continue action is clicked. When the table has already been narrowed to
+   * a single row, that row is used even if its text does not contain periodStart.
    */
   async openRatingPeriod(periodStart: string): Promise<void> {
     const dataRows = this.page.locator("table tbody tr");
     const textRow = dataRows.filter({ hasText: periodStart });
 
-    // Wait for the table to settle after the date filter applies: either the
-    // period's own row is present, or the filter has isolated a single row.
+    // Wait for the table to settle: either the period's own row is present, or a
+    // single row remains.
     await expect
       .poll(
         async () =>
@@ -251,6 +74,7 @@ export class SelfRatingPage {
       `No rating period row found for "${periodStart}".`
     ).toBeVisible();
 
+    // The action is an icon button labelled Start/Continue/... (accessible name).
     await row
       .getByRole("button", { name: /Start|Continue|Resume|Edit|View/ })
       .click();
@@ -273,7 +97,7 @@ export class SelfRatingPage {
 
   // --- Read-only guard ----------------------------------------------------
 
-  /** True when the period is already submitted (Submit/Save Draft unavailable). */
+  /** True when the period is already submitted (Save Draft unavailable). */
   async isReadOnly(): Promise<boolean> {
     const saveDraft = this.page.getByRole("button", { name: "Save Draft" });
     return !(await saveDraft.isVisible().catch(() => false));
@@ -283,8 +107,9 @@ export class SelfRatingPage {
 
   /** Read the current section heading (Capability, Creativity, ...). */
   async getCurrentSectionName(): Promise<string> {
+    // The section heading is the single <h5> in the form area.
     return (
-      (await this.page.locator("h2").first().textContent())?.trim() ?? ""
+      (await this.page.locator("main h5").first().textContent())?.trim() ?? ""
     );
   }
 
@@ -297,28 +122,31 @@ export class SelfRatingPage {
   }
 
   /**
-   * The accordion block for a criterion: the nearest ancestor of the title
-   * heading that also contains a description textbox. Scopes the star widget
-   * and the comment box to a single criterion.
+   * The accordion block for a criterion: the MuiAccordion whose header shows the
+   * criterion title. Scopes the star widget and the comment box to a single
+   * criterion. Titles render as <p> (not headings) since the refresh.
    */
   private criterionBlock(title: string): Locator {
     return this.page.locator(
-      `xpath=//h3[normalize-space()=${xpathLiteral(title)}]` +
-        `/ancestor::div[.//textarea or .//*[@placeholder="Enter description..."]][1]`
+      `xpath=//p[normalize-space()=${xpathLiteral(title)}]` +
+        `/ancestor::div[contains(@class,"MuiAccordion-root")][1]`
     );
   }
 
   /**
    * Set the star rating for a criterion block. Half values (x.5) click the left
    * half of star index floor(value); whole values (x) click the right half of
-   * star index value-1.
+   * star index value-1. The widget is a div[role="slider"][aria-label="Rating"]
+   * containing 5 star <span> elements (left half = x.5, right half = x).
    */
   private async setStarRating(block: Locator, value: string): Promise<void> {
     const v = parseFloat(value);
     const isHalf = v % 1 !== 0;
     const starIndex = isHalf ? Math.floor(v) : v - 1;
 
-    const stars = block.locator("button:has(svg.lucide-star)");
+    const stars = block.locator(
+      '[role="slider"][aria-label="Rating"] span.relative'
+    );
     const star = stars.nth(starIndex);
     await star.scrollIntoViewIfNeeded();
     const box = await star.boundingBox();
@@ -346,18 +174,16 @@ export class SelfRatingPage {
 
       await this.setStarRating(block, criterion.stars);
 
-      const comment = block.getByRole("textbox", {
-        name: "Enter description...",
-      });
+      const comment = block.getByPlaceholder("Enter your comments...");
       await comment.click();
       await comment.fill("");
       await comment.fill(criterion.comment);
     }
   }
 
-  /** Advance to the next section. */
+  /** Advance to the next section (MUI pagination "Go to next page"). */
   async clickNext(): Promise<void> {
-    const next = this.page.getByRole("button", { name: "Next", exact: true });
+    const next = this.page.getByRole("button", { name: "Go to next page" });
     await expect(next).toBeEnabled();
     await next.click();
   }
@@ -391,25 +217,6 @@ export class SelfRatingPage {
     }
   }
 }
-
-/** Month names as rendered in the MUI calendar header (e.g. "June 2026"). */
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-/** Matches a calendar header like "June 2026". */
-const MONTH_YEAR_RE = new RegExp(`^(${MONTH_NAMES.join("|")})\\s+\\d{4}$`);
 
 /** Build a safe XPath string literal (handles embedded quotes via concat()). */
 function xpathLiteral(value: string): string {

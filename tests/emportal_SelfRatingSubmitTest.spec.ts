@@ -7,6 +7,7 @@ import { SelfRatingPage } from "./pages/SelfRatingPage";
 import {
   selfRatingSections,
   selfRatingPeriod,
+  saveRating,
   submitRating,
   minWordsForStars,
   wordCount,
@@ -51,16 +52,12 @@ test.describe("EmPortal 2.0 self-rating submission", () => {
     await loginPage.submitLogin();
     await loginPage.waitForLogin();
 
-    // 2. Open the target self-appraisal period.
+    // 2. Open the target self-appraisal period. The My Ratings list defaults to
+    // the current month, so the current period's row is already visible and is
+    // opened directly by its start date (the old date-range navigation controls
+    // were removed in the refresh).
     const ratingPage = new SelfRatingPage(page);
     await ratingPage.navigateToMyRatings();
-    // First move the range window onto the target month with the backward/forward
-    // buttons (the filter defaults to today's month), then bound BOTH ends of the
-    // filter so the target period stays isolated even once today's date has moved
-    // past it (e.g. 16/06-30/06 filled in July).
-    await ratingPage.adjustDateRangeToPeriod(selfRatingPeriod.periodStart);
-    await ratingPage.selectStartDate(selfRatingPeriod.periodStart);
-    await ratingPage.selectEndDate(selfRatingPeriod.periodEnd);
     await ratingPage.openRatingPeriod(selfRatingPeriod.periodStart);
 
     // 3. Guard: a submitted period is read-only and cannot be filled.
@@ -97,9 +94,18 @@ test.describe("EmPortal 2.0 self-rating submission", () => {
       fullPage: true,
     });
 
-    // 6. Save the draft; submit only when explicitly requested (SUBMIT_RATING=true).
-    await ratingPage.saveDraft();
-    console.log("Self-rating saved as draft.");
+    // 6. Persist only when explicitly requested. Saving/submitting writes to the
+    //    user's REAL current-period self-appraisal, so by default the form is
+    //    filled but NOT saved (safe mode). Enable with SAVE_RATING=true (draft)
+    //    and SUBMIT_RATING=true (final submit).
+    if (saveRating) {
+      await ratingPage.saveDraft();
+      console.log("Self-rating saved as draft.");
+    } else {
+      console.log(
+        "SAVE_RATING not set - form filled but NOT saved (safe mode)."
+      );
+    }
 
     if (submitRating) {
       await ratingPage.submit();
@@ -110,7 +116,7 @@ test.describe("EmPortal 2.0 self-rating submission", () => {
       console.log("Self-rating submitted.");
     } else {
       console.log(
-        "SUBMIT_RATING not set - form filled & saved as draft but NOT submitted (safe mode)."
+        "SUBMIT_RATING not set - appraisal NOT submitted (safe mode)."
       );
     }
   });

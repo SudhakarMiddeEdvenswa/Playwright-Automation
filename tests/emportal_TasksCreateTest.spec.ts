@@ -32,6 +32,7 @@ const friday = monday.add(4, "day");
 const taskStartDate = monday.format(dateFormat);
 const taskEndDate = friday.format(dateFormat);
 const weekStartDisplay = monday.format("DD/MM/YYYY");
+const weekEndDisplay = friday.format("DD/MM/YYYY");
 
 const allTasks = [
   taskCData,
@@ -68,6 +69,9 @@ test.describe("EmPortal 2.0 - task creation", () => {
 
     // 2. Clean slate: EmPortal rejects duplicate tasks, so clear any existing
     //    copies of these tasks for this week first (keeps the spec re-runnable).
+    //    The list's date filter (defaults to the current month) constrains the
+    //    search, so widen it to this week before searching for cleanup.
+    await tasksPage.setWeekDateFilter(weekStartDisplay, weekEndDisplay);
     for (const task of allTasks) {
       await tasksPage.deleteTasksForWeek(task.taskName, weekStartDisplay);
     }

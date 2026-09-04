@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { Page, Locator, expect } from "@playwright/test";
 
 /**
  * Page Object for the EmPortal 2.0 "Task Management" page (/admin/tasks).
@@ -76,10 +76,38 @@ export class TasksPage {
     // mid-fill; re-apply any that did not survive so the form is valid to submit.
     if ((await nameField.inputValue()) !== taskName) {
       await nameField.fill(taskName);
-      await descField.fill(taskDescription);
       await this.fillEstimatedTime(dialog, time);
     }
     await expect(nameField).toHaveValue(taskName);
+
+    // The Description field AI-auto-generates from the task name on first focus.
+    // That async generation lands a few seconds later and OVERWRITES whatever we
+    // typed, often with markdown ("**Task Description: ...") that starts with a
+    // non-letter and trips the "Must start with a capital letter" rule, blocking
+    // "Create Task". The generation is one-shot per dialog, so re-apply our
+    // explicit (capital-first) description LAST, after it has settled.
+    await this.setDescriptionRobustly(descField, taskDescription);
+  }
+
+  /**
+   * Force the Description field to hold our explicit text, defeating the async
+   * AI auto-generate that overwrites it. Overwrites, waits for any pending
+   * generation to land, and retries until our value sticks.
+   */
+  private async setDescriptionRobustly(
+    descField: Locator,
+    description: string
+  ) {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await descField.click();
+      await descField.press("ControlOrMeta+a");
+      await descField.press("Delete");
+      await descField.fill(description);
+      // Let any pending auto-generate resolve; if it clobbers our value we retry.
+      await this.page.waitForTimeout(2500);
+      if ((await descField.inputValue()) === description) return;
+    }
+    await expect(descField).toHaveValue(description);
   }
 
   /**

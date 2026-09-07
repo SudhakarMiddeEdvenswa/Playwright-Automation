@@ -35,6 +35,7 @@ const taskStartDate = monday.format(dateFormat);
 const taskEndDate = friday.format(dateFormat);
 // Date as shown in the tasks table (used to scope cleanup to this week).
 const weekStartDisplay = monday.format("DD/MM/YYYY");
+const weekEndDisplay = friday.format("DD/MM/YYYY");
 
 const allTasks = [
   taskCData,
@@ -67,7 +68,11 @@ test.describe("EmPortal 2.0 - task deletion", () => {
     await tasksPage.navigateToManageTasks();
 
     // 2. Clean slate: EmPortal rejects duplicate tasks, so remove any existing
-    //    copies of these tasks for this week before (re)creating them.
+    //    copies of these tasks for this week before (re)creating them. The list's
+    //    date filter (defaults to the current month) constrains the search, so
+    //    widen it to this week first; it persists for the create + self-clean
+    //    steps below.
+    await tasksPage.setWeekDateFilter(weekStartDisplay, weekEndDisplay);
     for (const task of allTasks) {
       const removed = await tasksPage.deleteTasksForWeek(
         task.taskName,

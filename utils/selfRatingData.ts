@@ -76,6 +76,12 @@ export const selfRatingPeriod = {
   periodEnd: process.env.RATING_END_DATE || defaultPeriod.end,
 };
 
+// Whether to persist the filled form as a draft. Saving writes to the user's
+// REAL current-period self-appraisal, so it is OFF by default: the spec fills
+// the form to exercise the flow but does not save unless SAVE_RATING=true.
+export const saveRating =
+  (process.env.SAVE_RATING || "").toLowerCase() === "true";
+
 // Whether to actually submit the rating. Submitting permanently records the
 // self-appraisal, so it is OFF by default. Enable with SUBMIT_RATING=true.
 export const submitRating =

@@ -100,6 +100,16 @@ export const taskGData = {
   projectName: "Stax Payments",
   taskCategory: "Requirement Gathering",
 };
+// Company holiday task. The description is filled at runtime from EmPortal's
+// Holiday Calendar (e.g. "On occasion of Ganesh Chaturthi"); the literal below
+// is only a fallback if the calendar lookup returns nothing.
+export const holidayData = {
+  taskName: "Holiday",
+  time: "8:00",
+  taskDescription: "On occasion of company holiday.",
+  projectName: "Stax Payments",
+  taskCategory: "Holiday",
+};
 export const ratingData = {
   ratingName: "Code Quality",
   ratingDescription:

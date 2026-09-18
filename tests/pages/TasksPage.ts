@@ -91,7 +91,8 @@ export class TasksPage {
     startDate: string,
     endDate: string,
     projectName: string,
-    taskCategory: string
+    taskCategory: string,
+    billableStatus: string = "Billable"
   ) {
     const dialog = this.taskDrawer();
     const nameField = dialog.getByRole("textbox", { name: "Task Name" });
@@ -105,6 +106,12 @@ export class TasksPage {
 
     await this.selectComboboxOption(dialog, "Category", taskCategory);
     await this.selectComboboxOption(dialog, "Project", projectName);
+
+    // New in the 2.x UI: a required "Billable Status" dropdown (Billable /
+    // Non-Billable) sits between Project and Start Date. It defaults to the
+    // value inherited from the project allocation (often "Non-Billable"), so
+    // set it explicitly to the requested status for every task.
+    await this.selectBillableStatus(dialog, billableStatus);
 
     await this.fillDateGroup(dialog, "Start Date", startDate);
     await this.fillDateGroup(dialog, "End Date", endDate);
@@ -180,6 +187,22 @@ export class TasksPage {
     });
     await expect(createButton).toBeEnabled();
     await createButton.click();
+
+    // If the task's date range covers a company holiday, EmPortal interrupts
+    // with a "Holiday Warning" confirmation ("Do you still want to create this
+    // task?") and does NOT create the task until "Yes, Continue" is clicked -
+    // the drawer stays open behind it. Regular (non-holiday) tasks never show
+    // this dialog, so wait briefly for it and simply continue if it never
+    // appears. See emportal_HolidayTaskTest for the holiday-dated task case.
+    await this.page
+      .getByRole("dialog")
+      .filter({ hasText: "Holiday Warning" })
+      .getByRole("button", { name: "Yes, Continue" })
+      .click({ timeout: 3000 })
+      .catch(() => {
+        /* no holiday in the date range - nothing to confirm */
+      });
+
     // The drawer closes once the task is created.
     await expect(this.taskDrawer()).toBeHidden({ timeout: 15000 });
   }
@@ -299,6 +322,27 @@ export class TasksPage {
     await this.page
       .getByRole("option", { name: optionName, exact: true })
       .click();
+  }
+
+  /**
+   * Set the required "Billable Status" dropdown (Billable / Non-Billable).
+   * This is a MUI Autocomplete whose selected value lives in the input's `value`
+   * attribute (not as text content), so read/verify it with inputValue/toHaveValue
+   * rather than textContent/toHaveText. It defaults to the value inherited from
+   * the project allocation, so this is a no-op when the desired status is already
+   * selected. Verifies the value stuck.
+   */
+  private async selectBillableStatus(
+    dialog: ReturnType<Page["getByRole"]>,
+    status: string
+  ) {
+    const combo = dialog.getByRole("combobox", { name: "Billable Status" });
+    if (((await combo.inputValue()) ?? "").trim() === status) return;
+    await combo.click();
+    await this.page
+      .getByRole("option", { name: status, exact: true })
+      .click();
+    await expect(combo).toHaveValue(status);
   }
 
   /**

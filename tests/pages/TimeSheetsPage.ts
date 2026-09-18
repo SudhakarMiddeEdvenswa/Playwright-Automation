@@ -64,11 +64,23 @@ export class TimeSheetsPage {
     return Number((value ?? "0").trim());
   }
 
-  /** Locate a task row in the grid by its (unique) task name text. */
+  /**
+   * Locate a task row in the grid by its task-name cell. Matching the name
+   * *cell* (and excluding time-input cells) is important: when a weekday is a
+   * company holiday, every row's holiday cell carries a "Holiday" label, so a
+   * plain getByText("Holiday") would match every row. The task-name cell holds
+   * the name text and no time spinbuttons, so require exact name text in a cell
+   * that has no spinbutton - which the day-cell holiday badge always does.
+   */
   private taskRow(taskName: string): Locator {
     return this.page
       .getByRole("row")
-      .filter({ has: this.page.getByText(taskName, { exact: true }) })
+      .filter({
+        has: this.page
+          .getByRole("cell")
+          .filter({ has: this.page.getByText(taskName, { exact: true }) })
+          .filter({ hasNot: this.page.getByRole("spinbutton") }),
+      })
       .first();
   }
 
@@ -80,8 +92,22 @@ export class TimeSheetsPage {
    * so disabled cells are skipped. The MUI Hours section is filled by focusing
    * and typing (a plain fill() can drop digits on these fields), with fill() as
    * a fallback.
+   *
+   * @param skipDays weekday indices (0=Mon .. 4=Fri) to leave blank, e.g. a
+   *   company holiday that should carry only the Holiday task's hours, not this
+   *   task's regular work.
+   * @param confirmHoliday when true, accept EmPortal's "Holiday Entry"
+   *   confirmation ("<Festival> is a holiday. Are you sure...") that pops when
+   *   hours are entered on a holiday day. Set this only for the Holiday task
+   *   (the sole task meant to log hours on the holiday) so regular tasks don't
+   *   pay the confirmation-wait per cell.
    */
-  async fillTaskRowDaily(taskName: string, hours: string) {
+  async fillTaskRowDaily(
+    taskName: string,
+    hours: string,
+    skipDays: number[] = [],
+    confirmHoliday = false
+  ) {
     const row = this.taskRow(taskName);
     await expect(row, `Task row "${taskName}" not found in the grid.`).toBeVisible();
 
@@ -89,17 +115,39 @@ export class TimeSheetsPage {
     const hourFields = row.getByRole("spinbutton", { name: "Hours" });
     // Order is MON..SUN; only the first five are weekdays.
     for (let day = 0; day < 5; day++) {
+      // Leave holiday (or otherwise excluded) days blank for this task.
+      if (skipDays.includes(day)) continue;
       const field = hourFields.nth(day);
       // Skip days the task does not span (rendered disabled).
       if (!(await field.isEditable().catch(() => false))) continue;
       await field.click();
       await this.page.keyboard.type(hh, { delay: 40 });
+      if (confirmHoliday) await this.acceptHolidayEntryIfPresent();
       if (((await field.textContent()) ?? "").trim() !== hh) {
         await field.fill(hh);
+        if (confirmHoliday) await this.acceptHolidayEntryIfPresent();
       }
     }
     // Commit the last edited cell.
     await this.page.keyboard.press("Tab");
+    if (confirmHoliday) await this.acceptHolidayEntryIfPresent();
+  }
+
+  /**
+   * Accept the "Holiday Entry" confirmation dialog if it is showing. EmPortal
+   * raises it when hours are entered on a company holiday ("<Festival> is a
+   * holiday. Are you sure you want to log hours on this day?") and blocks the
+   * grid until "Yes, Continue" is clicked. No-op (short wait) when absent.
+   */
+  private async acceptHolidayEntryIfPresent() {
+    await this.page
+      .getByRole("dialog")
+      .filter({ hasText: "Holiday Entry" })
+      .getByRole("button", { name: "Yes, Continue" })
+      .click({ timeout: 3000 })
+      .catch(() => {
+        /* no holiday-entry confirmation showing */
+      });
   }
 
   /**

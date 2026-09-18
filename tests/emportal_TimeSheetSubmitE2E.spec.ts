@@ -13,10 +13,12 @@ import {
   taskEData,
   taskFData,
   taskGData,
+  holidayData,
 } from "../utils/prodData";
 import { LoginPage } from "./pages/LoginPage";
 import { TasksPage } from "./pages/TasksPage";
 import { TimeSheetsPage } from "./pages/TimeSheetsPage";
+import { HolidaysPage } from "./pages/HolidaysPage";
 
 // Environment configuration (.env). EmPortal 2.0 prod: https://edvenswatech.emportal.me/
 const baseURL = process.env.BASE_URL ?? "https://edvenswatech.emportal.me/";
@@ -36,7 +38,21 @@ const friday = monday.add(4, "day");
 // (weekStartDisplay, derived from `monday`) target the same week.
 const taskStartDate = monday.format(dateFormat);// Monday, 17 August 2026
 const taskEndDate = friday.format(dateFormat);// Friday, 21 August 2026
+// const taskStartDate = "2026-09-28";// Monday, 17 August 2026
+// const taskEndDate = "2026-10-02";// Friday, 21 August 2026
 const userName = timesheetData.userName; // "Midde Sudhakar"
+
+// Company holiday: the 14th of the current month by default (override with
+// HOLIDAY_DATE=YYYY-MM-DD). If that day falls on a weekday inside the week under
+// test, a single-day "Holiday" task is created and logged (8h) on that day, and
+// the regular tasks skip that day so the day is not double-counted.
+const holidayDate = process.env.HOLIDAY_DATE ?? dayjs().date(14).format(dateFormat);
+const holidayDisplay = dayjs(holidayDate).format("DD/MM/YYYY");
+// Weekday index within this Mon-Fri week (0=Mon .. 4=Fri); -1 if the holiday is
+// not a weekday of this week.
+const holidayIndex = dayjs(holidayDate).diff(monday, "day");
+const holidayInWeek = holidayIndex >= 0 && holidayIndex <= 4;
+const holidayHours = holidayData.time.split(":")[0]; // "8" from "8:00"
 
 // All seven tasks for the week. The heavy task (Code Commit Push, 10h estimate)
 // gets 2h/day; the rest get 1h/day -> 8h/day, 40h/week.
@@ -52,7 +68,10 @@ const allTasks = [
 
 test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
-  test.setTimeout(180_000);
+  // Eight tasks (seven regular + Holiday), each with robust description entry and
+  // a "Holiday Warning" to accept (every Mon-Fri task's range covers the
+  // holiday), so allow extra headroom over the 7-task run.
+  test.setTimeout(300_000);
 
   test("Create tasks, fill the weekly timesheet and save/submit", async ({
     page,
@@ -71,6 +90,26 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
     await loginPage.waitForLogin();
     expect(await loginPage.isLoggedIn(userName)).toBeTruthy();
 
+    // 1a. If a company holiday falls on a weekday of this week, look up the
+    //     festival/occasion from EmPortal's Holiday Calendar and build the
+    //     Holiday task's description from it (e.g. "On occasion of Ganesh
+    //     Chaturthi"). Falls back to the static description if not listed.
+    let holidayDescription = holidayData.taskDescription;
+    if (holidayInWeek) {
+      const holidaysPage = new HolidaysPage(page);
+      const festival = await holidaysPage.getHolidayName(holidayDate);
+      if (festival) {
+        holidayDescription = `On occasion of ${festival}`;
+        console.log(
+          `Holiday on ${holidayDisplay} (day ${holidayIndex}): ${festival}`
+        );
+      } else {
+        console.log(
+          `No holiday listed on ${holidayDisplay}; using default description.`
+        );
+      }
+    }
+
     // 2. Create the week's tasks on the Task Management page.
     const tasksPage = new TasksPage(page);
     await tasksPage.navigateToManageTasks();
@@ -81,6 +120,9 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
     // matches. (Rows with an already-submitted timesheet cannot be deleted.)
     const weekStartDisplay = monday.format("DD/MM/YYYY"); // e.g. "29/06/2026"
     const weekEndDisplay = friday.format("DD/MM/YYYY"); // e.g. "03/07/2026"
+
+    // const weekStartDisplay = "28/09/2026"; // e.g. "29/06/2026"
+    // const weekEndDisplay = "02/10/2026"; // e.g. "03/07/2026"
 
     // The task list defaults to a current-month date filter and its search only
     // matches rows inside that range. Widen it to this week so cleanup can find
@@ -98,6 +140,11 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
         );
       }
     }
+    // Also clear any existing Holiday task on the holiday day (its start date is
+    // the holiday, which may differ from the week's Monday).
+    if (holidayInWeek) {
+      await tasksPage.deleteTasksForWeek(holidayData.taskName, holidayDisplay);
+    }
 
     for (const task of allTasks) {
       await tasksPage.clickAddTasks();
@@ -114,22 +161,59 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
       console.log(`Created task: ${task.taskName}`);
     }
 
+    // Create the single-day Holiday task for the holiday itself. saveTask()
+    // accepts EmPortal's "Holiday Warning" confirmation automatically.
+    if (holidayInWeek) {
+      await tasksPage.clickAddTasks();
+      await tasksPage.fillTaskDetails(
+        holidayData.taskName,
+        holidayData.time,
+        holidayDescription,
+        holidayDate,
+        holidayDate,
+        holidayData.projectName,
+        holidayData.taskCategory
+      );
+      await tasksPage.saveTask();
+      console.log(
+        `Created Holiday task for ${holidayDisplay}: "${holidayDescription}"`
+      );
+    }
+
     // 3. Open the weekly timesheet grid for the same week.
     const timeSheetsPage = new TimeSheetsPage(page);
     await timeSheetsPage.navigateToManageTimeSheets();
     await timeSheetsPage.assertTimesheetPageVisible(userName);
     await timeSheetsPage.selectWeekByDate(taskStartDate);
 
+    const expectedTasks = allTasks.length + (holidayInWeek ? 1 : 0);
     const tasksFound = await timeSheetsPage.getTotalTasksFound();
     console.log(`Tasks found in timesheet for the week: ${tasksFound}`);
-    expect(tasksFound).toBeGreaterThanOrEqual(allTasks.length);
+    expect(tasksFound).toBeGreaterThanOrEqual(expectedTasks);
 
-    // 4. Fill Mon-Fri hours for every task row.
+    // 4. Fill Mon-Fri hours for every regular task row, leaving the holiday day
+    //    blank so it is not double-counted with the Holiday task.
+    const skipDays = holidayInWeek ? [holidayIndex] : [];
     for (const task of allTasks) {
       const hoursPerDay = task.taskName === taskCData.taskName ? "2" : "1";
-      await timeSheetsPage.fillTaskRowDaily(task.taskName, hoursPerDay);
+      await timeSheetsPage.fillTaskRowDaily(task.taskName, hoursPerDay, skipDays);
       const total = await timeSheetsPage.getTaskRowTotal(task.taskName);
       console.log(`Filled "${task.taskName}" -> weekly total ${total}`);
+    }
+
+    // 4a. Log the holiday's full-day hours on the holiday itself. The Holiday
+    //     task spans only that single day, so only that column is editable.
+    if (holidayInWeek) {
+      await timeSheetsPage.fillTaskRowDaily(
+        holidayData.taskName,
+        holidayHours,
+        [],
+        true // accept the "Holiday Entry" confirmation on the holiday day
+      );
+      const total = await timeSheetsPage.getTaskRowTotal(holidayData.taskName);
+      console.log(
+        `Filled "${holidayData.taskName}" (${holidayDisplay}) -> weekly total ${total}`
+      );
     }
 
     // 5. Capture proof of the filled grid.

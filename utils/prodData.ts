@@ -108,7 +108,7 @@ export const holidayData = {
   time: "8:00",
   taskDescription: "On occasion of company holiday.",
   projectName: "Stax Payments",
-  taskCategory: "Holiday",
+  taskCategory: "Leave",
 };
 // Paid leave task. Created as a single-day task on TIMESHEET_PAID_LEAVE_DATE.
 // The estimated time is overridden at runtime from TIMESHEET_PAID_LEAVE_HOURS.

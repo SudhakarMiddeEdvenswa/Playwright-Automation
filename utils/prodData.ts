@@ -100,6 +100,28 @@ export const taskGData = {
   projectName: "Stax Payments",
   taskCategory: "Requirement Gathering",
 };
+// Company holiday task. The description is filled at runtime from EmPortal's
+// Holiday Calendar (e.g. "On occasion of Ganesh Chaturthi"); the literal below
+// is only a fallback if the calendar lookup returns nothing.
+// taskCategory MUST stay "Holiday" — Since EmPortal have a "Holiday" category.
+export const holidayData = {
+  taskName: "Holiday",
+  time: "8:00",
+  taskDescription: "On occasion of company holiday.",
+  projectName: "Stax Payments",
+  taskCategory: "Holiday",
+};
+// Paid leave task. Created as a single-day task on TIMESHEET_PAID_LEAVE_DATE.
+// The estimated time is overridden at runtime from TIMESHEET_PAID_LEAVE_HOURS.
+// IMPORTANT: Verify "Leave" is the correct task-category name in EmPortal's
+// Category dropdown before running; update taskCategory here if it differs.
+export const paidLeaveData = {
+  taskName: "Paid Leave",
+  time: "8:00",
+  taskDescription: "Taking paid leave as per company leave policy.",
+  projectName: "Stax Payments",
+  taskCategory: "Leave",
+};
 export const ratingData = {
   ratingName: "Code Quality",
   ratingDescription:

@@ -91,7 +91,8 @@ export class TasksPage {
     startDate: string,
     endDate: string,
     projectName: string,
-    taskCategory: string
+    taskCategory: string,
+    billableStatus: string = "Billable"
   ) {
     const dialog = this.taskDrawer();
     const nameField = dialog.getByRole("textbox", { name: "Task Name" });
@@ -105,6 +106,12 @@ export class TasksPage {
 
     await this.selectComboboxOption(dialog, "Category", taskCategory);
     await this.selectComboboxOption(dialog, "Project", projectName);
+
+    // New in the 2.x UI: a required "Billable Status" dropdown (Billable /
+    // Non-Billable) sits between Project and Start Date. It defaults to the
+    // value inherited from the project allocation (often "Non-Billable"), so
+    // set it explicitly to the requested status for every task.
+    await this.selectBillableStatus(dialog, billableStatus);
 
     await this.fillDateGroup(dialog, "Start Date", startDate);
     await this.fillDateGroup(dialog, "End Date", endDate);
@@ -180,6 +187,22 @@ export class TasksPage {
     });
     await expect(createButton).toBeEnabled();
     await createButton.click();
+
+    // If the task's date range covers a company holiday, EmPortal interrupts
+    // with a "Holiday Warning" confirmation ("Do you still want to create this
+    // task?") and does NOT create the task until "Yes, Continue" is clicked -
+    // the drawer stays open behind it. Regular (non-holiday) tasks never show
+    // this dialog, so wait briefly for it and simply continue if it never
+    // appears. See emportal_HolidayTaskTest for the holiday-dated task case.
+    await this.page
+      .getByRole("dialog")
+      .filter({ hasText: "Holiday Warning" })
+      .getByRole("button", { name: "Yes, Continue" })
+      .click({ timeout: 3000 })
+      .catch(() => {
+        /* no holiday in the date range - nothing to confirm */
+      });
+
     // The drawer closes once the task is created.
     await expect(this.taskDrawer()).toBeHidden({ timeout: 15000 });
   }
@@ -302,10 +325,37 @@ export class TasksPage {
   }
 
   /**
+   * Set the required "Billable Status" dropdown (Billable / Non-Billable).
+   * This is a MUI Autocomplete whose selected value lives in the input's `value`
+   * attribute (not as text content), so read/verify it with inputValue/toHaveValue
+   * rather than textContent/toHaveText. It defaults to the value inherited from
+   * the project allocation, so this is a no-op when the desired status is already
+   * selected. Verifies the value stuck.
+   */
+  private async selectBillableStatus(
+    dialog: ReturnType<Page["getByRole"]>,
+    status: string
+  ) {
+    const combo = dialog.getByRole("combobox", { name: "Billable Status" });
+    if (((await combo.inputValue()) ?? "").trim() === status) return;
+    await combo.click();
+    await this.page
+      .getByRole("option", { name: status, exact: true })
+      .click();
+    await expect(combo).toHaveValue(status);
+  }
+
+  /**
    * Fill a MUI date picker group (Day/Month/Year sections) from an ISO date and
    * verify the formatted value stuck. Scoped to the dialog so it never matches a
-   * date group elsewhere on the page. A plain section fill() can drop digits, so
-   * fall back to focusing the Day section and typing all 8 digits sequentially.
+   * date group elsewhere on the page.
+   *
+   * MUI date spinbuttons are contenteditable <span> elements, so fill() has no
+   * effect on them. The primary strategy is to click the Day section and type all
+   * 8 digits (DDMMYYYY) so MUI's auto-advance carries the cursor through Month
+   * and Year. When any section still shows its placeholder ("DD"/"MM"/"YYYY"),
+   * pressSequentially is applied to that section individually and the full
+   * sequence retries up to 3 times before the hard assertion fires.
    * @param groupName "Start Date" | "End Date"
    * @param isoDate   "YYYY-MM-DD"
    */
@@ -320,19 +370,44 @@ export class TasksPage {
     const monthField = group.getByRole("spinbutton", { name: "Month" });
     const yearField = group.getByRole("spinbutton", { name: "Year" });
 
-    // Focus the Day section and type all 8 digits; the MUI date field
-    // auto-advances Day -> Month -> Year. This is far more reliable than fill()
-    // on each section, which can intermittently drop digits.
-    await dayField.click();
-    await this.page.keyboard.type(`${day}${month}${year}`, { delay: 40 });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      // Click and wait for the MUI field to become ready, then type all 8 digits.
+      // MUI auto-advances Day → Month → Year as each section fills.
+      await dayField.click();
+      await this.page.waitForTimeout(150);
+      await this.page.keyboard.type(`${day}${month}${year}`, { delay: 50 });
+      await this.page.waitForTimeout(100);
 
-    // Verify; retry once per section with fill() as a fallback.
-    if (((await dayField.textContent()) ?? "").trim() !== day)
-      await dayField.fill(day);
-    if (((await monthField.textContent()) ?? "").trim() !== month)
-      await monthField.fill(month);
-    if (((await yearField.textContent()) ?? "").trim() !== year)
-      await yearField.fill(year);
+      const dayVal = ((await dayField.textContent()) ?? "").trim();
+      const monthVal = ((await monthField.textContent()) ?? "").trim();
+      const yearVal = ((await yearField.textContent()) ?? "").trim();
+
+      if (dayVal === day && monthVal === month && yearVal === year) break;
+
+      // One or more sections didn't stick: target them individually with
+      // pressSequentially (fill() has no effect on contenteditable spinbuttons).
+      if (dayVal !== day) {
+        await dayField.click();
+        await this.page.waitForTimeout(100);
+        await dayField.pressSequentially(day, { delay: 50 });
+      }
+      if (monthVal !== month) {
+        await monthField.click();
+        await this.page.waitForTimeout(100);
+        await monthField.pressSequentially(month, { delay: 50 });
+      }
+      if (yearVal !== year) {
+        await yearField.click();
+        await this.page.waitForTimeout(100);
+        await yearField.pressSequentially(year, { delay: 50 });
+      }
+
+      const allOk =
+        ((await dayField.textContent()) ?? "").trim() === day &&
+        ((await monthField.textContent()) ?? "").trim() === month &&
+        ((await yearField.textContent()) ?? "").trim() === year;
+      if (allOk) break;
+    }
 
     await expect(dayField).toHaveText(day);
     await expect(monthField).toHaveText(month);

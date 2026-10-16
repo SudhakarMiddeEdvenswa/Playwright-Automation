@@ -81,9 +81,12 @@ const paidLeaveIndex =
     : -1;
 const paidLeaveInWeek = paidLeaveIndex >= 0 && paidLeaveIndex <= 4;
 
+/** Format an integer hour count as "HH:00" for EmPortal's Estimated Time field. */
+const fmtHours = (h: number): string => `${String(h).padStart(2, "0")}:00`;
+
 // All seven tasks for the week.
-// taskC (Code Commit Push, 10h estimate) gets 2h/day; the rest get 1h/day
-// → 8h/day total across the 7 tasks, 40h/week.
+// taskC (Code Commit Push) gets 2h/day; the rest get 1h/day → 8h/day, 40h/week.
+// Estimated times are computed dynamically at runtime (see actualWorkDays below).
 const allTasks = [
   taskCData,
   taskAData,
@@ -262,6 +265,19 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
       }
     }
 
+    // Compute skipDays here — before task creation — so actualWorkDays can drive
+    // both the estimated time on each task and the timesheet-fill hours below.
+    // Holiday and paid-leave days are skipped for regular tasks; dedicated tasks
+    // (Holiday / Paid Leave) carry the full hours for those days on their own.
+    const skipDays = Array.from(
+      new Set([
+        ...(holidayActive ? [holidayIndex] : []),
+        ...(includePaidLeave && paidLeaveInWeek ? [paidLeaveIndex] : []),
+      ])
+    );
+    // Actual working days for regular tasks this week (max 5).
+    const actualWorkDays = 5 - skipDays.length;
+
     // 2. Create the week's tasks on the Task Management page.
     const tasksPage = new TasksPage(page);
     await tasksPage.navigateToManageTasks();
@@ -305,11 +321,17 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
     }
 
     // Create regular Mon-Fri tasks.
+    // Estimated time = hoursPerDay × actualWorkDays so it exactly matches the
+    // hours that will be logged in the timesheet grid (leave/holiday days excluded).
+    //   taskC (Code Commit Push): 2h/day → e.g. 2 × 4 = 8h when 1 day is skipped
+    //   all others             : 1h/day → e.g. 1 × 4 = 4h when 1 day is skipped
     for (const task of allTasks) {
+      const hoursPerDay = task.taskName === taskCData.taskName ? 2 : 1;
+      const estimatedTime = fmtHours(hoursPerDay * actualWorkDays);
       await tasksPage.clickAddTasks();
       await tasksPage.fillTaskDetails(
         task.taskName,
-        task.time,
+        estimatedTime,
         task.taskDescription,
         taskStartDate,
         taskEndDate,
@@ -317,7 +339,7 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
         task.taskCategory
       );
       await tasksPage.saveTask();
-      console.log(`Created task: ${task.taskName}`);
+      console.log(`Created task: ${task.taskName} (est. ${estimatedTime})`);
     }
 
     // Create the single-day Holiday task (when confirmed active).
@@ -373,15 +395,8 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
     expect(tasksFound).toBeGreaterThanOrEqual(expectedTasks);
 
     // 4. Fill Mon-Fri hours for every regular task row.
-    //    Both the holiday day (when active) and the paid-leave day are skipped
-    //    so their dedicated tasks carry the full hours without double-counting.
-    //    Regular tasks: 2h/day (taskC) + 1h/day × 6 others = 8h/day on work days.
-    const skipDays = Array.from(
-      new Set([
-        ...(holidayActive ? [holidayIndex] : []),
-        ...(includePaidLeave && paidLeaveInWeek ? [paidLeaveIndex] : []),
-      ])
-    );
+    //    skipDays already accounts for the holiday and paid-leave days so those
+    //    columns are left blank for regular tasks; their dedicated tasks fill them.
     for (const task of allTasks) {
       const hoursPerDay = task.taskName === taskCData.taskName ? "2" : "1";
       await timeSheetsPage.fillTaskRowDaily(task.taskName, hoursPerDay, skipDays);

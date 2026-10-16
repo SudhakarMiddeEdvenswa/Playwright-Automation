@@ -36,10 +36,8 @@ const monday = dayjs().startOf("week").add(1, "day"); // startOf('week') is Sund
 const friday = monday.add(4, "day");
 // Anchor to the CURRENT week so task creation and the per-week cleanup
 // (weekStartDisplay, derived from `monday`) target the same week.
-const taskStartDate = monday.format(dateFormat);// Monday, 17 August 2026
-const taskEndDate = friday.format(dateFormat);// Friday, 21 August 2026
-// const taskStartDate = "2026-09-28";// Monday, 17 August 2026
-// const taskEndDate = "2026-10-02";// Friday, 21 August 2026
+const taskStartDate = monday.format(dateFormat); // Monday of the current week
+const taskEndDate = friday.format(dateFormat); // Friday of the current week
 const userName = timesheetData.userName; // "Midde Sudhakar"
 
 // Company holiday: the 14th of the current month by default (override with

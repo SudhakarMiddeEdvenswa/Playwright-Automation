@@ -348,8 +348,14 @@ export class TasksPage {
   /**
    * Fill a MUI date picker group (Day/Month/Year sections) from an ISO date and
    * verify the formatted value stuck. Scoped to the dialog so it never matches a
-   * date group elsewhere on the page. A plain section fill() can drop digits, so
-   * fall back to focusing the Day section and typing all 8 digits sequentially.
+   * date group elsewhere on the page.
+   *
+   * MUI date spinbuttons are contenteditable <span> elements, so fill() has no
+   * effect on them. The primary strategy is to click the Day section and type all
+   * 8 digits (DDMMYYYY) so MUI's auto-advance carries the cursor through Month
+   * and Year. When any section still shows its placeholder ("DD"/"MM"/"YYYY"),
+   * pressSequentially is applied to that section individually and the full
+   * sequence retries up to 3 times before the hard assertion fires.
    * @param groupName "Start Date" | "End Date"
    * @param isoDate   "YYYY-MM-DD"
    */
@@ -364,19 +370,44 @@ export class TasksPage {
     const monthField = group.getByRole("spinbutton", { name: "Month" });
     const yearField = group.getByRole("spinbutton", { name: "Year" });
 
-    // Focus the Day section and type all 8 digits; the MUI date field
-    // auto-advances Day -> Month -> Year. This is far more reliable than fill()
-    // on each section, which can intermittently drop digits.
-    await dayField.click();
-    await this.page.keyboard.type(`${day}${month}${year}`, { delay: 40 });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      // Click and wait for the MUI field to become ready, then type all 8 digits.
+      // MUI auto-advances Day → Month → Year as each section fills.
+      await dayField.click();
+      await this.page.waitForTimeout(150);
+      await this.page.keyboard.type(`${day}${month}${year}`, { delay: 50 });
+      await this.page.waitForTimeout(100);
 
-    // Verify; retry once per section with fill() as a fallback.
-    if (((await dayField.textContent()) ?? "").trim() !== day)
-      await dayField.fill(day);
-    if (((await monthField.textContent()) ?? "").trim() !== month)
-      await monthField.fill(month);
-    if (((await yearField.textContent()) ?? "").trim() !== year)
-      await yearField.fill(year);
+      const dayVal = ((await dayField.textContent()) ?? "").trim();
+      const monthVal = ((await monthField.textContent()) ?? "").trim();
+      const yearVal = ((await yearField.textContent()) ?? "").trim();
+
+      if (dayVal === day && monthVal === month && yearVal === year) break;
+
+      // One or more sections didn't stick: target them individually with
+      // pressSequentially (fill() has no effect on contenteditable spinbuttons).
+      if (dayVal !== day) {
+        await dayField.click();
+        await this.page.waitForTimeout(100);
+        await dayField.pressSequentially(day, { delay: 50 });
+      }
+      if (monthVal !== month) {
+        await monthField.click();
+        await this.page.waitForTimeout(100);
+        await monthField.pressSequentially(month, { delay: 50 });
+      }
+      if (yearVal !== year) {
+        await yearField.click();
+        await this.page.waitForTimeout(100);
+        await yearField.pressSequentially(year, { delay: 50 });
+      }
+
+      const allOk =
+        ((await dayField.textContent()) ?? "").trim() === day &&
+        ((await monthField.textContent()) ?? "").trim() === month &&
+        ((await yearField.textContent()) ?? "").trim() === year;
+      if (allOk) break;
+    }
 
     await expect(dayField).toHaveText(day);
     await expect(monthField).toHaveText(month);

@@ -14,6 +14,7 @@ import {
   taskFData,
   taskGData,
   holidayData,
+  paidLeaveData,
 } from "../utils/prodData";
 import { LoginPage } from "./pages/LoginPage";
 import { TasksPage } from "./pages/TasksPage";
@@ -52,6 +53,32 @@ const holidayIndex = dayjs(holidayDate).diff(monday, "day");
 const holidayInWeek = holidayIndex >= 0 && holidayIndex <= 4;
 const holidayHours = holidayData.time.split(":")[0]; // "8" from "8:00"
 
+// ── Paid-leave configuration (disabled by default) ────────────────────────────
+// Activate with TIMESHEET_INCLUDE_PAID_LEAVE=true. Requires:
+//   TIMESHEET_PAID_LEAVE_DATE   — YYYY-MM-DD, must be a Mon-Fri of the current week
+//   TIMESHEET_PAID_LEAVE_HOURS  — whole number 1-8 (default: 8)
+//   TIMESHEET_WEEKLY_TARGET_HOURS — (default: 40)
+//
+// Hour-balance rule (enforced by assertPaidLeaveConfig before the test starts):
+//   (5 - skippedDays) × 8h + leaveHours [+ holidayHours] = weeklyTarget
+//
+// With the current 7-task distribution (2h/day taskC + 1h/day × 6 others = 8h/day):
+//   Full-day leave (8h) on one weekday → 4 days × 8h + 8h leave = 40h ✓
+// ─────────────────────────────────────────────────────────────────────────────
+const includePaidLeave = process.env.TIMESHEET_INCLUDE_PAID_LEAVE === "true";
+const paidLeaveDate = (process.env.TIMESHEET_PAID_LEAVE_DATE ?? "").trim();
+const paidLeaveHours = parseInt(process.env.TIMESHEET_PAID_LEAVE_HOURS ?? "8", 10);
+const weeklyTarget = parseInt(process.env.TIMESHEET_WEEKLY_TARGET_HOURS ?? "40", 10);
+const paidLeaveDisplay = paidLeaveDate
+  ? dayjs(paidLeaveDate).format("DD/MM/YYYY")
+  : "";
+// Weekday index of the leave date in the Mon-Fri grid (0=Mon..4=Fri), -1 if outside.
+const paidLeaveIndex =
+  includePaidLeave && paidLeaveDate
+    ? dayjs(paidLeaveDate).diff(monday, "day")
+    : -1;
+const paidLeaveInWeek = paidLeaveIndex >= 0 && paidLeaveIndex <= 4;
+
 // All seven tasks for the week. The heavy task (Code Commit Push, 10h estimate)
 // gets 2h/day; the rest get 1h/day -> 8h/day, 40h/week.
 const allTasks = [
@@ -64,11 +91,88 @@ const allTasks = [
   taskGData,
 ];
 
+/**
+ * Validate paid-leave env-var configuration before the test body runs.
+ * Throws with a clear, actionable message on any misconfiguration so the spec
+ * fails fast with diagnostic output rather than a cryptic mid-test error.
+ *
+ * Skipped day accounting:
+ *   Regular tasks run on (5 - uniqueSkippedCount) days at 8h/day.
+ *   uniqueSkippedCount = 1 (paid leave) + 1 if a holiday also falls that week
+ *                        on a DIFFERENT day than the leave day.
+ *   The validation asserts: regularDays × 8 + leaveHours [+ holidayHours] = weeklyTarget.
+ */
+function assertPaidLeaveConfig() {
+  if (!includePaidLeave) return;
+
+  if (!paidLeaveDate) {
+    throw new Error(
+      "TIMESHEET_INCLUDE_PAID_LEAVE=true but TIMESHEET_PAID_LEAVE_DATE is not set. " +
+        "Provide a YYYY-MM-DD date that falls on a Mon-Fri of the current workweek " +
+        `(${taskStartDate} → ${taskEndDate}).`
+    );
+  }
+  if (!dayjs(paidLeaveDate).isValid()) {
+    throw new Error(
+      `TIMESHEET_PAID_LEAVE_DATE="${paidLeaveDate}" is not a valid date. ` +
+        "Use YYYY-MM-DD format (e.g. 2026-10-20)."
+    );
+  }
+  if (isNaN(paidLeaveHours) || paidLeaveHours < 1 || paidLeaveHours > 8) {
+    throw new Error(
+      `TIMESHEET_PAID_LEAVE_HOURS="${process.env.TIMESHEET_PAID_LEAVE_HOURS}" is invalid. ` +
+        "Must be a whole number from 1 to 8."
+    );
+  }
+  if (isNaN(weeklyTarget) || weeklyTarget <= 0) {
+    throw new Error(
+      `TIMESHEET_WEEKLY_TARGET_HOURS="${process.env.TIMESHEET_WEEKLY_TARGET_HOURS}" is invalid. ` +
+        "Must be a positive whole number (standard: 40)."
+    );
+  }
+  if (!paidLeaveInWeek) {
+    throw new Error(
+      `TIMESHEET_PAID_LEAVE_DATE="${paidLeaveDate}" (day index ${paidLeaveIndex}) does not fall ` +
+        `on a Mon-Fri weekday of the current week (${taskStartDate} → ${taskEndDate}). ` +
+        "Update TIMESHEET_PAID_LEAVE_DATE or run the spec in the correct week."
+    );
+  }
+  if (holidayInWeek && holidayIndex === paidLeaveIndex) {
+    throw new Error(
+      `TIMESHEET_PAID_LEAVE_DATE (${paidLeaveDate}) coincides with the company holiday ` +
+        `(${holidayDate}). A paid leave day and a company holiday cannot share the same date. ` +
+        "Adjust TIMESHEET_PAID_LEAVE_DATE or HOLIDAY_DATE."
+    );
+  }
+
+  // Hours-balance check: count unique skipped days (paid leave + any holiday on a different day).
+  const uniqueSkipped = new Set([
+    paidLeaveIndex,
+    ...(holidayInWeek ? [holidayIndex] : []),
+  ]);
+  const regularDays = 5 - uniqueSkipped.size;
+  const regularHours = regularDays * 8; // 8h/day: 2h (taskC) + 1h × 6 others
+  const specialHours =
+    paidLeaveHours + (holidayInWeek ? parseInt(holidayHours, 10) : 0);
+  const projectedTotal = regularHours + specialHours;
+
+  if (projectedTotal !== weeklyTarget) {
+    const holidayLine = holidayInWeek ? `\n  Holiday      : ${holidayHours}h` : "";
+    throw new Error(
+      `Paid-leave configuration will not reach the ${weeklyTarget}h weekly target.\n` +
+        `  Regular work : ${regularDays} days × 8h = ${regularHours}h\n` +
+        `  Paid leave   : ${paidLeaveHours}h` +
+        holidayLine +
+        `\n  Projected    : ${projectedTotal}h  (need ${weeklyTarget}h)\n` +
+        "Fix: adjust TIMESHEET_PAID_LEAVE_HOURS or TIMESHEET_WEEKLY_TARGET_HOURS to balance."
+    );
+  }
+}
+
 test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
-  // Eight tasks (seven regular + Holiday), each with robust description entry and
-  // a "Holiday Warning" to accept (every Mon-Fri task's range covers the
-  // holiday), so allow extra headroom over the 7-task run.
+  // Seven regular tasks + optional Holiday + optional Paid Leave, each with
+  // robust description entry and potential "Holiday Warning" confirmations.
   test.setTimeout(300_000);
 
   test("Create tasks, fill the weekly timesheet and save/submit", async ({
@@ -78,7 +182,18 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
       throw new Error("USER and PASSWORD environment variables must be set.");
     }
 
-    console.log(`Week under test: ${taskStartDate} -> ${taskEndDate}`);
+    // Validate paid-leave configuration before touching the application, so any
+    // misconfiguration surfaces as a clear error rather than a mid-test failure.
+    assertPaidLeaveConfig();
+
+    console.log(`Week under test : ${taskStartDate} → ${taskEndDate}`);
+    if (includePaidLeave && paidLeaveInWeek) {
+      const actualWorkHours = weeklyTarget - paidLeaveHours;
+      console.log(
+        `Paid leave      : ${paidLeaveDisplay} (${paidLeaveHours}h) — ` +
+          `actual work reduced to ${actualWorkHours}h over ${5 - (holidayInWeek ? 2 : 1)} day(s)`
+      );
+    }
 
     // 1. Login (EmPortal 2.0 has no CAPTCHA).
     const loginPage = new LoginPage(page);
@@ -116,11 +231,8 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
     // "Add New Task" drawer open and fails the save. Clear this week's tasks
     // first so the flow is idempotent and safe to re-run. No-op when nothing
     // matches. (Rows with an already-submitted timesheet cannot be deleted.)
-    const weekStartDisplay = monday.format("DD/MM/YYYY"); // e.g. "29/06/2026"
-    const weekEndDisplay = friday.format("DD/MM/YYYY"); // e.g. "03/07/2026"
-
-    // const weekStartDisplay = "28/09/2026"; // e.g. "29/06/2026"
-    // const weekEndDisplay = "02/10/2026"; // e.g. "03/07/2026"
+    const weekStartDisplay = monday.format("DD/MM/YYYY"); // e.g. "13/10/2026"
+    const weekEndDisplay = friday.format("DD/MM/YYYY"); // e.g. "17/10/2026"
 
     // The task list defaults to a current-month date filter and its search only
     // matches rows inside that range. Widen it to this week so cleanup can find
@@ -138,12 +250,27 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
         );
       }
     }
-    // Also clear any existing Holiday task on the holiday day (its start date is
-    // the holiday, which may differ from the week's Monday).
+
+    // Also clear any existing Holiday task (its start date is the holiday day,
+    // which may differ from the week's Monday).
     if (holidayInWeek) {
       await tasksPage.deleteTasksForWeek(holidayData.taskName, holidayDisplay);
     }
 
+    // Clear any existing Paid Leave task on the configured leave day.
+    if (includePaidLeave && paidLeaveInWeek) {
+      const removed = await tasksPage.deleteTasksForWeek(
+        paidLeaveData.taskName,
+        paidLeaveDisplay
+      );
+      if (removed > 0) {
+        console.log(
+          `Removed ${removed} existing "${paidLeaveData.taskName}" task(s) for ${paidLeaveDisplay}.`
+        );
+      }
+    }
+
+    // Create regular Mon-Fri tasks.
     for (const task of allTasks) {
       await tasksPage.clickAddTasks();
       await tasksPage.fillTaskDetails(
@@ -178,20 +305,50 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
       );
     }
 
+    // Create the single-day Paid Leave task on the configured leave date.
+    // The estimated time is set from TIMESHEET_PAID_LEAVE_HOURS so the task
+    // record matches the hours that will be logged in the timesheet grid.
+    if (includePaidLeave && paidLeaveInWeek) {
+      await tasksPage.clickAddTasks();
+      await tasksPage.fillTaskDetails(
+        paidLeaveData.taskName,
+        `${paidLeaveHours}:00`,
+        paidLeaveData.taskDescription,
+        paidLeaveDate,
+        paidLeaveDate,
+        paidLeaveData.projectName,
+        paidLeaveData.taskCategory
+      );
+      await tasksPage.saveTask();
+      console.log(
+        `Created Paid Leave task for ${paidLeaveDisplay} (${paidLeaveHours}h).`
+      );
+    }
+
     // 3. Open the weekly timesheet grid for the same week.
     const timeSheetsPage = new TimeSheetsPage(page);
     await timeSheetsPage.navigateToManageTimeSheets();
     await timeSheetsPage.assertTimesheetPageVisible(userName);
     await timeSheetsPage.selectWeekByDate(taskStartDate);
 
-    const expectedTasks = allTasks.length + (holidayInWeek ? 1 : 0);
+    const expectedTasks =
+      allTasks.length +
+      (holidayInWeek ? 1 : 0) +
+      (includePaidLeave && paidLeaveInWeek ? 1 : 0);
     const tasksFound = await timeSheetsPage.getTotalTasksFound();
     console.log(`Tasks found in timesheet for the week: ${tasksFound}`);
     expect(tasksFound).toBeGreaterThanOrEqual(expectedTasks);
 
-    // 4. Fill Mon-Fri hours for every regular task row, leaving the holiday day
-    //    blank so it is not double-counted with the Holiday task.
-    const skipDays = holidayInWeek ? [holidayIndex] : [];
+    // 4. Fill Mon-Fri hours for every regular task row.
+    //    Both the company holiday and the paid-leave day are skipped so their
+    //    dedicated tasks carry the full hours for those days without double-counting.
+    //    Regular tasks: 2h/day (taskC) + 1h/day × 6 others = 8h/day on work days.
+    const skipDays = Array.from(
+      new Set([
+        ...(holidayInWeek ? [holidayIndex] : []),
+        ...(includePaidLeave && paidLeaveInWeek ? [paidLeaveIndex] : []),
+      ])
+    );
     for (const task of allTasks) {
       const hoursPerDay = task.taskName === taskCData.taskName ? "2" : "1";
       await timeSheetsPage.fillTaskRowDaily(task.taskName, hoursPerDay, skipDays);
@@ -214,11 +371,51 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
       );
     }
 
-    // 5. Capture proof of the filled grid.
+    // 4b. Log paid-leave hours on the configured leave date. The task spans only
+    //     that single day so only that day's column is editable in the grid.
+    if (includePaidLeave && paidLeaveInWeek) {
+      await timeSheetsPage.fillTaskRowDaily(
+        paidLeaveData.taskName,
+        String(paidLeaveHours),
+        [] // no further days to skip — the task covers only the leave date
+      );
+      const total = await timeSheetsPage.getTaskRowTotal(paidLeaveData.taskName);
+      console.log(
+        `Filled "${paidLeaveData.taskName}" (${paidLeaveDisplay}) -> weekly total ${total}`
+      );
+    }
+
+    // 5. Capture proof of the filled grid before saving.
     await page.screenshot({
       path: path.join(__dirname, "timesheet-filled.png"),
       fullPage: true,
     });
+
+    // 5a. Validate the weekly total against the configured target by reading
+    //     the application's own displayed row-total cells. This confirms that
+    //     actual work hours + paid-leave hours (+ holiday hours) = weeklyTarget,
+    //     using the grid's values rather than the automation's internal counters.
+    let computedWeeklyHours = 0;
+    for (const task of allTasks) {
+      const rowTotal = await timeSheetsPage.getTaskRowTotal(task.taskName);
+      computedWeeklyHours += parseInt(rowTotal.split(":")[0] ?? "0", 10);
+    }
+    if (holidayInWeek) {
+      const rowTotal = await timeSheetsPage.getTaskRowTotal(holidayData.taskName);
+      computedWeeklyHours += parseInt(rowTotal.split(":")[0] ?? "0", 10);
+    }
+    if (includePaidLeave && paidLeaveInWeek) {
+      const rowTotal = await timeSheetsPage.getTaskRowTotal(paidLeaveData.taskName);
+      computedWeeklyHours += parseInt(rowTotal.split(":")[0] ?? "0", 10);
+    }
+    console.log(
+      `Weekly total (from grid): ${computedWeeklyHours}h  |  target: ${weeklyTarget}h`
+    );
+    expect(
+      computedWeeklyHours,
+      `Weekly hours ${computedWeeklyHours}h do not match the ${weeklyTarget}h target. ` +
+        "Review task-row totals in the screenshot before submitting."
+    ).toBe(weeklyTarget);
 
     // 6. Save the draft (reversible). Submit only when explicitly requested.
     await timeSheetsPage.saveTimesheet();
@@ -233,7 +430,7 @@ test.describe("EmPortal 2.0 - weekly timesheet submission E2E", () => {
       console.log("Timesheet submitted.");
     } else {
       console.log(
-        "SUBMIT_TIMESHEET not set - timesheet filled & saved but NOT submitted (safe mode)."
+        "SUBMIT_TIMESHEET not set — timesheet filled & saved but NOT submitted (safe mode)."
       );
     }
   });

@@ -110,6 +110,17 @@ export const holidayData = {
   projectName: "Stax Payments",
   taskCategory: "Holiday",
 };
+// Paid leave task. Created as a single-day task on TIMESHEET_PAID_LEAVE_DATE.
+// The estimated time is overridden at runtime from TIMESHEET_PAID_LEAVE_HOURS.
+// IMPORTANT: Verify "Leave" is the correct task-category name in EmPortal's
+// Category dropdown before running; update taskCategory here if it differs.
+export const paidLeaveData = {
+  taskName: "Paid Leave",
+  time: "8:00",
+  taskDescription: "Taking paid leave as per company leave policy.",
+  projectName: "Stax Payments",
+  taskCategory: "Leave",
+};
 export const ratingData = {
   ratingName: "Code Quality",
   ratingDescription:

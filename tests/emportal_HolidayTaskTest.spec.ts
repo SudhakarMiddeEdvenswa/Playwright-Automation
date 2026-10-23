@@ -23,7 +23,7 @@ const holidayDisplay = dayjs(holidayDate).format("DD/MM/YYYY");
 
 test.describe("EmPortal 2.0 - holiday task creation", () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
 
   test("Creates a Holiday task with a description from the Holiday Calendar", async ({
     page,

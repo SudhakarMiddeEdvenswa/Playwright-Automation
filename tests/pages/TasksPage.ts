@@ -104,8 +104,10 @@ export class TasksPage {
     // our explicit description (fill() clears any auto-generated value first).
     await descField.fill(taskDescription);
 
-    await this.selectComboboxOption(dialog, "Category", taskCategory);
+    // Project must be selected BEFORE Category: the Category dropdown loads its
+    // options only after a project is chosen (returns "No options" otherwise).
     await this.selectComboboxOption(dialog, "Project", projectName);
+    await this.selectComboboxOption(dialog, "Category", taskCategory);
 
     // New in the 2.x UI: a required "Billable Status" dropdown (Billable /
     // Non-Billable) sits between Project and Start Date. It defaults to the

@@ -53,14 +53,14 @@ export const taskAData = {
   time: "5:00",
   taskDescription: "Daily Standup Meeting with Offshore Team.",
   projectName: "Stax Payments",
-  taskCategory: "Meetings Internal",
+  taskCategory: "Internal Meetings",
 };
 export const taskBData = {
   taskName: "Onsite Standup Meeting",
   time: "5:00",
   taskDescription: "Attending standup meetings to give status on current work.",
   projectName: "Stax Payments",
-  taskCategory: "Meetings Client",
+  taskCategory: "Client Meeting",
 };
 export const taskCData = {
   taskName: "Preparing/scripting Automation scripts for Jira ticket",

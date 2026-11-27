@@ -21,14 +21,9 @@ export class TimeSheetsPage {
     this.page = page;
   }
 
-  /** Open the Timesheets page via the "Project Execution" fly-out menu. */
+  /** Open the Timesheets page via direct URL (the "Project Execution" fly-out was removed in the Nov 2026 nav redesign). */
   async navigateToManageTimeSheets() {
-    await this.page
-      .getByRole("button", { name: "Project Execution" })
-      .hover();
-    await this.page
-      .getByRole("link", { name: "Timesheet", exact: true })
-      .click();
+    await this.page.goto("/admin/timesheets");
     await expect(
       this.page.getByRole("heading", { name: "Timesheets", exact: true })
     ).toBeVisible();

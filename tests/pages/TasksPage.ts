@@ -18,7 +18,7 @@ import { Page, Locator, expect } from "@playwright/test";
  *    longer a role="dialog", so it is scoped via `taskDrawer()` instead of
  *    getByRole("dialog", ...).
  *  - The task-list search box placeholder is now
- *    "Search by task no, name, project, or description...".
+ *    "Search tasks...".
  *  - The list has a Start Date/End Date filter (defaults to the current month)
  *    and the search only matches within that range, so callers widen it with
  *    `setWeekDateFilter()` before searching for a week's tasks.
@@ -30,17 +30,9 @@ export class TasksPage {
     this.page = page;
   }
 
-  /** Open Task Management via the "Project Execution" fly-out menu. */
+  /** Open Task Management via direct URL (the "Project Execution" fly-out was removed in the Nov 2026 nav redesign). */
   async navigateToManageTasks() {
-    await this.page
-      .getByRole("button", { name: "Project Execution" })
-      .hover();
-    // The dashboard <main> also has a "Tasks" quick-link, so getByRole("link",
-    // { name: "Tasks" }) is ambiguous. Target the fly-out link specifically as
-    // the only "Tasks" link that is not inside <main>.
-    await this.page
-      .locator('xpath=//a[normalize-space(.)="Tasks" and not(ancestor::main)]')
-      .click();
+    await this.page.goto("/admin/tasks");
     await expect(
       this.page.getByRole("heading", { name: "Task Management" })
     ).toBeVisible();
@@ -74,7 +66,7 @@ export class TasksPage {
 
   /** Open the "Add New Task" drawer. */
   async clickAddTasks() {
-    await this.page.getByRole("button", { name: "Add Tasks" }).click();
+    await this.page.getByRole("button", { name: "Add Task" }).click();
     await expect(this.taskDrawer()).toBeVisible();
   }
 
@@ -95,8 +87,11 @@ export class TasksPage {
     billableStatus: string = "Billable"
   ) {
     const dialog = this.taskDrawer();
-    const nameField = dialog.getByRole("textbox", { name: "Task Name" });
-    const descField = dialog.getByRole("textbox", { name: "Description" });
+    // Use placeholder-based locators: "Task Name" substring appears in both the
+    // name input and the description textarea's placeholder, causing strict-mode
+    // violations when using getByRole with the default substring match.
+    const nameField = dialog.getByPlaceholder("Enter task name");
+    const descField = dialog.getByPlaceholder(/Enter task description/);
 
     await nameField.fill(taskName);
 
@@ -106,8 +101,9 @@ export class TasksPage {
 
     // Project must be selected BEFORE Category: the Category dropdown loads its
     // options only after a project is chosen (returns "No options" otherwise).
+    // Label text in the drawer is "Project *" and "Task Category *" (Nov 2026 UI).
     await this.selectComboboxOption(dialog, "Project", projectName);
-    await this.selectComboboxOption(dialog, "Category", taskCategory);
+    await this.selectComboboxOption(dialog, "Task Category", taskCategory);
 
     // New in the 2.x UI: a required "Billable Status" dropdown (Billable /
     // Non-Billable) sits between Project and Start Date. It defaults to the
@@ -168,9 +164,8 @@ export class TasksPage {
     time: string
   ) {
     const value = this.normalizeTime(time);
-    const field = dialog.getByRole("textbox", {
-      name: "Estimated Time (HH:MM)",
-    });
+    // Placeholder changed from "Estimated Time (HH:MM)" to "e.g., 02:30" in Nov 2026 UI refresh.
+    const field = dialog.getByPlaceholder("e.g., 02:30");
     await field.click();
     await field.fill(value);
     if ((await field.inputValue()) !== value) {
@@ -236,9 +231,9 @@ export class TasksPage {
     // within the Start Date/End Date filter range, so callers must widen it with
     // setWeekDateFilter() first (see the spec).
     const search = this.page.getByRole("textbox", {
-      name: "Search by task no, name, project, or description...",
+      name: "Search tasks...",
     });
-    await search.fill("");
+    await this.clearSearchBox(search);
     await search.fill(taskName);
     await search.press("Enter");
 
@@ -279,12 +274,28 @@ export class TasksPage {
     }
 
     // Clear the search filter so the table is unfiltered for later steps.
-    await search.fill("");
+    await this.clearSearchBox(search);
     await this.page.waitForTimeout(300);
     return deleted;
   }
 
   // --- Helpers ------------------------------------------------------------
+
+  /**
+   * Clear the search textbox. MUI renders a "Clear" icon button next to the
+   * input whenever it has a value; clicking it is more reliable than fill("")
+   * which can time out on an already-focused MUI input.
+   */
+  private async clearSearchBox(search: Locator) {
+    const clearBtn = this.page.getByRole("button", { name: "Clear", exact: true }).first();
+    if (await clearBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await clearBtn.click();
+    } else {
+      await search.click();
+      await search.press("ControlOrMeta+a");
+      await search.press("Delete");
+    }
+  }
 
   /**
    * Fill one of the task list's date filter groups from a DD/MM/YYYY string.
@@ -314,13 +325,21 @@ export class TasksPage {
     await expect(yearField).toHaveText(year);
   }
 
-  /** Open a MUI combobox and pick the option with the exact given label. */
+  /**
+   * Open a MUI Autocomplete combobox by its field label and pick an option.
+   * The comboboxes in the Add Task drawer have no ARIA accessible name — their
+   * labels are plain divs (not <label> elements). We scope to the field container
+   * whose first child div contains "<labelText> *" and click the input inside it.
+   */
   private async selectComboboxOption(
     dialog: ReturnType<Page["getByRole"]>,
-    comboName: string,
+    labelText: string,
     optionName: string
   ) {
-    await dialog.getByRole("combobox", { name: comboName }).click();
+    const input = dialog.locator(
+      `xpath=.//div[child::div[normalize-space()="${labelText} *"]]//input`
+    );
+    await input.click();
     await this.page
       .getByRole("option", { name: optionName, exact: true })
       .click();
@@ -328,23 +347,22 @@ export class TasksPage {
 
   /**
    * Set the required "Billable Status" dropdown (Billable / Non-Billable).
-   * This is a MUI Autocomplete whose selected value lives in the input's `value`
-   * attribute (not as text content), so read/verify it with inputValue/toHaveValue
-   * rather than textContent/toHaveText. It defaults to the value inherited from
-   * the project allocation, so this is a no-op when the desired status is already
-   * selected. Verifies the value stuck.
+   * Uses the same label-scoped XPath strategy as selectComboboxOption since the
+   * Billable Status input also has no ARIA accessible name in the drawer.
    */
   private async selectBillableStatus(
     dialog: ReturnType<Page["getByRole"]>,
     status: string
   ) {
-    const combo = dialog.getByRole("combobox", { name: "Billable Status" });
-    if (((await combo.inputValue()) ?? "").trim() === status) return;
-    await combo.click();
+    const input = dialog.locator(
+      `xpath=.//div[child::div[normalize-space()="Billable Status *"]]//input`
+    );
+    if (((await input.inputValue()) ?? "").trim() === status) return;
+    await input.click();
     await this.page
       .getByRole("option", { name: status, exact: true })
       .click();
-    await expect(combo).toHaveValue(status);
+    await expect(input).toHaveValue(status);
   }
 
   /**
@@ -367,10 +385,14 @@ export class TasksPage {
     isoDate: string
   ) {
     const [year, month, day] = isoDate.split("-");
-    const group = dialog.getByRole("group", { name: groupName });
-    const dayField = group.getByRole("spinbutton", { name: "Day" });
-    const monthField = group.getByRole("spinbutton", { name: "Month" });
-    const yearField = group.getByRole("spinbutton", { name: "Year" });
+    // The date group has no ARIA name in the Nov 2026 drawer; scope to the
+    // field container whose first child div has the label text ("<groupName> *").
+    const container = dialog.locator(
+      `xpath=.//div[child::div[normalize-space()="${groupName} *"]]`
+    );
+    const dayField = container.getByRole("spinbutton", { name: "Day" });
+    const monthField = container.getByRole("spinbutton", { name: "Month" });
+    const yearField = container.getByRole("spinbutton", { name: "Year" });
 
     for (let attempt = 0; attempt < 3; attempt++) {
       // Click and wait for the MUI field to become ready, then type all 8 digits.

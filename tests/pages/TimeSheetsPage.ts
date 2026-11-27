@@ -42,10 +42,10 @@ export class TimeSheetsPage {
    * ("YYYY-MM-DD"). The grid reloads to show that Mon-Sun week.
    *
    * Nov 2026: group renamed from "Select Week" to "Week".
-   * Each spinbutton is clicked individually before typing only its digits —
-   * typing the full date string in one go relies on MUI's auto-advance between
-   * sections, which misfires when fields already hold a value and produces the
-   * wrong day (e.g. "22" instead of "23"). Explicit per-field clicks avoid that.
+   * If the page already shows the target date we skip entirely — typing digits
+   * into an already-filled MUI X date spinbutton corrupts it (produces "0202"
+   * instead of "2026"). The timesheets page defaults to the current week, which
+   * is the week under test, so the skip fires in the common case.
    */
   async selectWeekByDate(isoDate: string) {
     const [year, month, day] = isoDate.split("-");
@@ -54,6 +54,21 @@ export class TimeSheetsPage {
     const monthField = group.getByRole("spinbutton", { name: "Month" });
     const yearField = group.getByRole("spinbutton", { name: "Year" });
 
+    const pad = (s: string) => s.padStart(2, "0");
+    const txt = async (loc: Locator) =>
+      ((await loc.textContent({ timeout: 2000 }).catch(() => "")) ?? "").trim();
+
+    if (
+      pad(await txt(dayField)) === pad(day) &&
+      pad(await txt(monthField)) === pad(month) &&
+      (await txt(yearField)) === year
+    ) {
+      // Already on the correct week — do not touch the spinbuttons.
+      await this.page.waitForTimeout(500);
+      return;
+    }
+
+    // Target week is different — click each spinbutton and type only its digits.
     await dayField.click();
     await this.page.keyboard.type(day, { delay: 50 });
     await monthField.click();
@@ -67,9 +82,11 @@ export class TimeSheetsPage {
 
   /** Number of task rows found for the selected week (from the summary banner). */
   async getTotalTasksFound(): Promise<number> {
-    // Nov 2026: "Total Tasks Found:" (with colon) became "Total Tasks Found" (no colon).
+    // Nov 2026 DOM: "Total Tasks Found" label is inside a wrapper div; the value
+    // paragraph is a sibling of that wrapper, not of the label itself.
+    // Use /../ to step up to the wrapper before taking following-sibling.
     const value = await this.page
-      .locator("xpath=//*[normalize-space()='Total Tasks Found']/following-sibling::*[1]")
+      .locator("xpath=//*[normalize-space()='Total Tasks Found']/../following-sibling::*[1]")
       .first()
       .textContent();
     return Number((value ?? "0").trim());

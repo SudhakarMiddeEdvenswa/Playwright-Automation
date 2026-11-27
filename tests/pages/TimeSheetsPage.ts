@@ -40,16 +40,29 @@ export class TimeSheetsPage {
   /**
    * Point the week selector at the week containing the given ISO date
    * ("YYYY-MM-DD"). The grid reloads to show that Mon-Sun week.
-   * Nov 2026: group renamed from "Select Week" to "Week"; keyboard-type
-   * is more reliable than fill() for MUI date spinbuttons.
+   *
+   * Nov 2026: group renamed from "Select Week" to "Week".
+   * Each spinbutton is clicked individually before typing only its digits —
+   * typing the full date string in one go relies on MUI's auto-advance between
+   * sections, which misfires when fields already hold a value and produces the
+   * wrong day (e.g. "22" instead of "23"). Explicit per-field clicks avoid that.
    */
   async selectWeekByDate(isoDate: string) {
     const [year, month, day] = isoDate.split("-");
     const group = this.page.getByRole("group", { name: "Week", exact: true }).first();
-    await group.getByRole("spinbutton", { name: "Day" }).click();
-    await this.page.keyboard.type(`${day}${month}${year}`, { delay: 40 });
+    const dayField = group.getByRole("spinbutton", { name: "Day" });
+    const monthField = group.getByRole("spinbutton", { name: "Month" });
+    const yearField = group.getByRole("spinbutton", { name: "Year" });
+
+    await dayField.click();
+    await this.page.keyboard.type(day, { delay: 50 });
+    await monthField.click();
+    await this.page.keyboard.type(month, { delay: 50 });
+    await yearField.click();
+    await this.page.keyboard.type(year, { delay: 50 });
+
     // Allow the grid to refresh for the selected week.
-    await this.page.waitForTimeout(1000);
+    await this.page.waitForTimeout(1500);
   }
 
   /** Number of task rows found for the selected week (from the summary banner). */

@@ -79,16 +79,14 @@ export class SelfRatingPage {
       .getByRole("button", { name: /Start|Continue|Resume|Edit|View/ })
       .click();
 
-    // The rating form is a separate route that fetches the period, the UK-score
-    // chart and previous comments before it paints, so allow well beyond the
-    // default 5s for its subtitle to appear. If it never appears the form is
-    // stuck on its loading spinner, which so far has been EmPortal's
-    // GET /api/appraisals/{id}/ratings returning a 200 header but never
-    // finishing the body (a backend hang), not a problem with this automation.
+    // Wait for the rating form to render. The first section heading <h5>
+    // (Capability, Creativity, …) is the "form ready" signal. The old subtitle
+    // text ("Rate your own performance for this appraisal period") became a
+    // button's aria-label in the Nov 2026 UI refresh and is no longer findable
+    // via getByText(). If the h5 never appears the form is stuck on its loading
+    // spinner (backend hang on GET /api/appraisals/{id}/ratings).
     await expect(
-      this.page.getByText(
-        "Rate your own performance for this appraisal period"
-      ),
+      this.page.locator("main h5").first(),
       "Rating form never rendered (stuck on the loading spinner). This period's " +
         "GET /api/appraisals/{id}/ratings likely hung server-side; retry when the " +
         "EmPortal backend is responsive."

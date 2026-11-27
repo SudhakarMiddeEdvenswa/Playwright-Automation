@@ -1,4 +1,3 @@
-import { time } from "console";
 export const testData = {
   user: {
     username: "sudhakar.midde@edvenswatech.com",
@@ -53,14 +52,14 @@ export const taskAData = {
   time: "5:00",
   taskDescription: "Daily Standup Meeting with Offshore Team.",
   projectName: "Stax Payments",
-  taskCategory: "Internal Meetings",
+  taskCategory: "Meetings & Collaboration",
 };
 export const taskBData = {
   taskName: "Onsite Standup Meeting",
   time: "5:00",
   taskDescription: "Attending standup meetings to give status on current work.",
   projectName: "Stax Payments",
-  taskCategory: "Client Meeting",
+  taskCategory: "Meetings & Collaboration",
 };
 export const taskCData = {
   taskName: "Preparing/scripting Automation scripts for Jira ticket",
@@ -68,21 +67,21 @@ export const taskCData = {
   taskDescription:
     "Created new automation scripts for Jira ticket which is assigned to me.",
   projectName: "Stax Payments",
-  taskCategory: "Code Commit Push",
+  taskCategory: "Development & Engineering",
 };
 export const taskDData = {
   taskName: "Executing Scripts",
   time: "5:00",
   taskDescription: "Executed all the automation scripts as per Jira ticket.",
   projectName: "Stax Payments",
-  taskCategory: "Monitoring",
+  taskCategory: "Deployment & Release Management",
 };
 export const taskEData = {
   taskName: "Review automation scripts with Business Leads",
   time: "5:00",
   taskDescription: "Reviewing all the automation scripts with team leads.",
   projectName: "Stax Payments",
-  taskCategory: "Code Review",
+  taskCategory: "Deployment & Release Management",
 };
 export const taskFData = {
   taskName: "Stax payments PHO Dashboard",
@@ -90,7 +89,7 @@ export const taskFData = {
   taskDescription:
     "Phoenix Team PHO tickets Automation - Analyze the tickets to how to do automation if not possible just to help dev team for testing manually and create automation tickets under Quality Assurance.",
   projectName: "Stax Payments",
-  taskCategory: "Quality Assurance",
+  taskCategory: "Quality Assurance & Testing",
 };
 export const taskGData = {
   taskName: "Doubts and clarifications on new tasks",
@@ -98,7 +97,7 @@ export const taskGData = {
   taskDescription:
     "Reaching out the required POC to get clarifications on new tasks.",
   projectName: "Stax Payments",
-  taskCategory: "Requirement Gathering",
+  taskCategory: "Documentation & Knowledge Management",
 };
 // Company holiday task. The description is filled at runtime from EmPortal's
 // Holiday Calendar (e.g. "On occasion of Ganesh Chaturthi"); the literal below
@@ -109,7 +108,7 @@ export const holidayData = {
   time: "8:00",
   taskDescription: "On occasion of company holiday.",
   projectName: "Stax Payments",
-  taskCategory: "Holiday",
+  taskCategory: "Leave & Holidays",
 };
 // Paid leave task. Created as a single-day task on TIMESHEET_PAID_LEAVE_DATE.
 // The estimated time is overridden at runtime from TIMESHEET_PAID_LEAVE_HOURS.
@@ -120,7 +119,7 @@ export const paidLeaveData = {
   time: "8:00",
   taskDescription: "Taking paid leave as per company leave policy.",
   projectName: "Stax Payments",
-  taskCategory: "Leave",
+  taskCategory: "Leave & Holidays",
 };
 export const ratingData = {
   ratingName: "Code Quality",

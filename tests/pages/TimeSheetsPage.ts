@@ -29,31 +29,34 @@ export class TimeSheetsPage {
     ).toBeVisible();
   }
 
-  /** Assert the timesheet belongs to the expected user. */
-  async assertTimesheetPageVisible(userName: string) {
-    await expect(
-      this.page.getByText(`Timesheet for ${userName}`)
-    ).toBeVisible();
+  /**
+   * Assert the timesheet page is loaded. Nov 2026 redesign removed the
+   * "Timesheet for <name>" subtitle; the page now shows "Timesheet Week".
+   */
+  async assertTimesheetPageVisible(_userName: string) {
+    await expect(this.page.getByText("Timesheet Week")).toBeVisible();
   }
 
   /**
    * Point the week selector at the week containing the given ISO date
    * ("YYYY-MM-DD"). The grid reloads to show that Mon-Sun week.
+   * Nov 2026: group renamed from "Select Week" to "Week"; keyboard-type
+   * is more reliable than fill() for MUI date spinbuttons.
    */
   async selectWeekByDate(isoDate: string) {
     const [year, month, day] = isoDate.split("-");
-    const group = this.page.getByRole("group", { name: "Select Week" });
-    await group.getByRole("spinbutton", { name: "Day" }).fill(day);
-    await group.getByRole("spinbutton", { name: "Month" }).fill(month);
-    await group.getByRole("spinbutton", { name: "Year" }).fill(year);
+    const group = this.page.getByRole("group", { name: "Week", exact: true }).first();
+    await group.getByRole("spinbutton", { name: "Day" }).click();
+    await this.page.keyboard.type(`${day}${month}${year}`, { delay: 40 });
     // Allow the grid to refresh for the selected week.
     await this.page.waitForTimeout(1000);
   }
 
   /** Number of task rows found for the selected week (from the summary banner). */
   async getTotalTasksFound(): Promise<number> {
+    // Nov 2026: "Total Tasks Found:" (with colon) became "Total Tasks Found" (no colon).
     const value = await this.page
-      .locator("xpath=//*[normalize-space()='Total Tasks Found:']/following-sibling::*[1]")
+      .locator("xpath=//*[normalize-space()='Total Tasks Found']/following-sibling::*[1]")
       .first()
       .textContent();
     return Number((value ?? "0").trim());
@@ -118,7 +121,9 @@ export class TimeSheetsPage {
       await field.click();
       await this.page.keyboard.type(hh, { delay: 40 });
       if (confirmHoliday) await this.acceptHolidayEntryIfPresent();
-      if (((await field.textContent()) ?? "").trim() !== hh) {
+      // Use inputValue() not textContent() — spinbuttons are <input> elements whose
+      // value lives in the value attribute, not as text content.
+      if (((await field.inputValue().catch(() => "")) ?? "").trim() !== hh) {
         await field.fill(hh);
         if (confirmHoliday) await this.acceptHolidayEntryIfPresent();
       }
@@ -162,7 +167,7 @@ export class TimeSheetsPage {
       if (!(await field.isEditable().catch(() => false))) continue;
       await field.click();
       await this.page.keyboard.type(hh, { delay: 40 });
-      if (((await field.textContent()) ?? "").trim() !== hh) {
+      if (((await field.inputValue().catch(() => "")) ?? "").trim() !== hh) {
         await field.fill(hh);
       }
       filled++;
